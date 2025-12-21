@@ -188,9 +188,9 @@ This is a personal portfolio template. Feel free to fork and customize for your 
 
 ## 📧 Contact
 
-- Email: your.email@example.com
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your Name](https://linkedin.com/in/yourusername)
+- Email: harinzu47@gmail.com
+- GitHub: [@harinzu47](https://github.com/harinzu47)
+- LinkedIn: [Khalid Jundullah](www.linkedin.com/in/khalid-jundullah-8086b8249)
 
 ---
 
