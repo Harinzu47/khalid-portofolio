@@ -3,9 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { projects } from '@/data/projects';
 import { Card } from '@/components/ui/Card';
-import { ProjectCategory } from '@/types';
+import { Project, ProjectCategory } from '@/types';
 import { ArrowRight } from 'lucide-react';
 
 type FilterOption = 'All' | ProjectCategory;
@@ -27,10 +26,14 @@ const filters: { option: FilterOption; flag: string }[] = [
   { option: 'AI',         flag: '--ai' },
 ];
 
+interface ProjectsGridProps {
+  projects: Project[];
+}
+
 /**
  * Projects grid — CLI flag filters + terminal-styled cards
  */
-export function ProjectsGrid() {
+export function ProjectsGrid({ projects }: ProjectsGridProps) {
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
 
   const filteredProjects =

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { journalPosts, getJournalPostBySlug } from '@/data/journal';
+import { getAllJournalPosts, getJournalPostBySlug } from '@/lib/content';
 import JournalPostClient from './JournalPostClient';
 import { notFound } from 'next/navigation';
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * Generate static params for all journal posts
  */
 export async function generateStaticParams() {
-  return journalPosts.map((post) => ({ slug: post.slug }));
+  return getAllJournalPosts().map((post) => ({ slug: post.slug }));
 }
 
 /**
@@ -48,9 +48,7 @@ export default async function JournalPostPage({ params }: Props) {
   if (!post) notFound();
 
   // Find prev/next posts
-  const sortedPosts = [...journalPosts].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const sortedPosts = getAllJournalPosts();
   const idx       = sortedPosts.findIndex((p) => p.slug === slug);
   const prevPost  = idx < sortedPosts.length - 1 ? sortedPosts[idx + 1] : null;
   const nextPost  = idx > 0 ? sortedPosts[idx - 1] : null;

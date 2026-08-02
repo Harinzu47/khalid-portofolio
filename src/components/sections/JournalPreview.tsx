@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getAllJournalPosts } from '@/data/journal';
+import { getAllJournalPosts } from '@/lib/content';
 import { ArrowRight } from 'lucide-react';
 
 /**

@@ -4,17 +4,20 @@ import { TechStack }      from '@/components/sections/TechStack';
 import { ProjectsGrid }   from '@/components/sections/ProjectsGrid';
 import { JournalPreview } from '@/components/sections/JournalPreview';
 import { Contact }        from '@/components/sections/Contact';
+import { getAllProjects } from '@/lib/content';
 
 /**
  * Main landing page — hzcode.my.id
  */
 export default function Home() {
+  const projects = getAllProjects();
+
   return (
     <main className="min-h-screen bg-terminal-bg">
       <Hero />
       <About />
       <TechStack />
-      <ProjectsGrid />
+      <ProjectsGrid projects={projects} />
       <JournalPreview />
       <Contact />
     </main>

@@ -1,0 +1,60 @@
+---
+title: Fixing N+1 Query in Rank Leaderboard
+date: 2025-11-15
+readTime: ~5 min
+excerpt: "A leaderboard page was making 300+ DB queries per page load. Here's how I tracked it down and fixed it with eager loading."
+tags:
+  - web-dev
+  - php
+  - database
+  - laravel
+---
+
+## The Problem
+
+After deploying the leaderboard feature on the FLC LMS, I noticed response times climbing to 2–3 seconds on pages with 50+ students. A quick Laravel Debugbar check revealed **317 database queries per page load**. Classic N+1.
+
+The offending code:
+
+```php
+// Before: N+1 queries — 1 query for rankings + N queries for each user
+$rankings = Ranking::orderBy('score', 'desc')->get();
+
+foreach ($rankings as $rank) {
+    echo $rank->user->name;         // extra query
+    echo $rank->course->title;      // extra query
+}
+```
+
+## Why It Happens
+
+Laravel's Eloquent is lazy by default. When you access a relationship on a model instance (like `$rank->user`), it fires a new SQL query for each instance. With 100 students, that's 100 extra `SELECT` queries just for names.
+
+## The Fix
+
+Eager load the relationships upfront using `with()`:
+
+```php
+// After: 3 queries total regardless of list size
+$rankings = Ranking::with(['user', 'course'])
+    ->orderBy('score', 'desc')
+    ->get();
+```
+
+Debugbar went from 317 queries to **3 queries**. Page load dropped from ~2.8s to **~180ms**.
+
+## Spotting N+1 in Production
+
+If you don't have Debugbar in prod, enable Laravel's query log temporarily:
+
+```php
+DB::enableQueryLog();
+// ... your code ...
+dd(DB::getQueryLog()); // inspect in local dev
+```
+
+Or use [Laravel Telescope](https://laravel.com/docs/telescope) for persistent monitoring.
+
+## Key Takeaway
+
+Always profile before optimizing. The fix here took 2 minutes once I knew where to look. The investigation took 20 minutes. Tooling matters.

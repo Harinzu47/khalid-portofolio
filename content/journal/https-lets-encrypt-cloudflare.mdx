@@ -1,0 +1,85 @@
+---
+title: "HTTPS Setup via Let's Encrypt + Cloudflare"
+date: 2025-10-03
+readTime: ~8 min
+excerpt: "Setting up free HTTPS on a VPS with Let's Encrypt and Certbot, fronted by Cloudflare for DDoS protection and cache."
+tags:
+  - infra
+  - networking
+  - ssl
+  - nginx
+  - cloudflare
+---
+
+## Why Both Let's Encrypt AND Cloudflare?
+
+Let's Encrypt gives you a free TLS certificate for your origin server. Cloudflare acts as a reverse proxy in front of it, adding DDoS protection, caching, and a second layer of TLS termination. The combination gives you:
+
+- **Origin → Cloudflare**: full TLS (your Let's Encrypt cert)
+- **Cloudflare → User**: Cloudflare's cert (handled automatically)
+
+This is called **Full (Strict)** mode in Cloudflare's SSL/TLS settings.
+
+## Step 1 — Install Certbot
+
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+## Step 2 — Obtain Certificate
+
+Before running Certbot, temporarily pause Cloudflare's proxy (set DNS record to DNS-only, grey cloud). This lets Certbot's HTTP-01 challenge reach your server directly.
+
+```bash
+sudo certbot --nginx -d hzcode.my.id -d www.hzcode.my.id
+```
+
+Certbot will automatically modify your Nginx config to add the SSL block.
+
+## Step 3 — Nginx Config
+
+After Certbot runs, your `/etc/nginx/sites-available/hzcode` will look like:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name hzcode.my.id www.hzcode.my.id;
+
+    ssl_certificate     /etc/letsencrypt/live/hzcode.my.id/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/hzcode.my.id/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+server {
+    listen 80;
+    server_name hzcode.my.id www.hzcode.my.id;
+    return 301 https://$host$request_uri;
+}
+```
+
+## Step 4 — Re-enable Cloudflare Proxy
+
+Turn the proxy back on (orange cloud). Set SSL/TLS mode to **Full (Strict)** in Cloudflare dashboard.
+
+## Step 5 — Auto-Renewal
+
+Certbot installs a systemd timer automatically. Verify it:
+
+```bash
+sudo systemctl status certbot.timer
+# Test renewal dry-run:
+sudo certbot renew --dry-run
+```
+
+## Gotchas
+
+- **Cloudflare flexible mode** will break things if your origin has a valid cert — always use Full (Strict)
+- **Rate limits**: Let's Encrypt limits to 5 certs/domain/week — don't hammer it while testing
+- If using Docker, make sure the Certbot container can write to the `/etc/letsencrypt` volume

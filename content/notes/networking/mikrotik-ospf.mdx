@@ -1,0 +1,25 @@
+---
+title: "MikroTik OSPF Area & Stub Configuration Notes"
+category: "networking"
+tags: ["mikrotik", "ospf", "networking"]
+lastUpdated: "2025-09-15"
+status: "evergreen"
+---
+
+# MikroTik OSPF Area & Stub Configuration Notes
+
+Notes on configuring dynamic routing across multi-site network topologies using RouterOS.
+
+## Basic OSPF Instance Setup
+
+```routeros
+/routing ospf instance add name=default router-id=10.0.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=default
+/routing ospf interface-template add area=backbone interfaces=ether2 type=ptp
+```
+
+## Troubleshooting Neighbor Flapping
+
+If OSPF neighborship flaps repeatedly over WAN links or GNS3 virtual links:
+1. Ensure `hello-interval` and `dead-interval` match on both ends (e.g. 10s hello, 40s dead).
+2. Verify MTU matches on connecting interfaces.

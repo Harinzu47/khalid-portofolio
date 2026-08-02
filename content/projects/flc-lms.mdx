@@ -1,0 +1,77 @@
+---
+title: FLC Learning Management System
+shortDescription: Full-featured Laravel TALL-stack LMS deployed on Docker with a CI/CD pipeline and a full security audit.
+category: Infra
+year: 2025
+image: /images/projects/flc-lms.png
+github: "https://github.com/Harinzu47/flc-lms"
+demo: ""
+technologies:
+  - Laravel
+  - Livewire
+  - Alpine.js
+  - Tailwind CSS
+  - Docker
+  - MySQL
+  - Redis
+  - Nginx
+  - GitHub Actions
+  - "Let's Encrypt"
+---
+
+# FLC Learning Management System
+
+## Overview
+A production-grade Learning Management System built for FLC (Future Learning Center), handling course management, student enrollment, automated assessments, and real-time progress tracking. The project scope included infrastructure setup, Docker deployment, a full CI/CD pipeline, and a thorough security audit.
+
+## Problem / Context
+The client needed a reliable e-learning platform capable of serving hundreds of concurrent users, with zero-downtime deployments and traceable security posture. The previous solution was a plain PHP application with no containerization and manual FTP deployments.
+
+## Architecture
+The system uses a TALL-stack (Tailwind CSS, Alpine.js, Laravel, Livewire) for the application layer, containerized via Docker Compose for reproducible environments:
+
+```yaml
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [db, redis]
+  db:
+    image: mysql:8.0
+    volumes: [db_data:/var/lib/mysql]
+  redis:
+    image: redis:alpine
+  nginx:
+    image: nginx:alpine
+    ports: ["80:80", "443:443"]
+```
+
+GitHub Actions handles CI/CD: on every push to `main`, the pipeline runs PHPUnit tests, builds the Docker image, and deploys to the VPS via SSH.
+
+## Key Technical Decisions
+- **Docker Compose** for dev/prod parity — eliminated "works on my machine" issues
+- **GitHub Actions** pipeline with test → build → deploy stages
+- **Redis** for session storage and queue driver — decoupled job processing
+- **Let's Encrypt via Certbot** in the nginx container for automatic HTTPS renewal
+- **Laravel Policies + Gates** for fine-grained RBAC (admin, instructor, student roles)
+
+## Challenges & Fixes
+| Challenge | Fix |
+|-----------|-----|
+| N+1 queries on leaderboard | Eager-loaded `with('user', 'course')` relationships |
+| WebSocket conflicts on shared hosting | Migrated to VPS + Laravel Reverb |
+| Zero-downtime deploy | Implemented blue-green swap via Nginx upstream switch |
+| SQL injection in legacy endpoints | Full audit + parameterized queries + Eloquent ORM migration |
+
+## Security Audit Findings
+- Replaced all raw SQL queries with Eloquent
+- Added CSRF tokens to all AJAX forms
+- Enforced rate limiting on login endpoint (5 req/min)
+- Added Content-Security-Policy headers via middleware
+- Rotated all secrets to `.env` + Docker secrets
+
+## Results
+- Deployed to production with 99.9% uptime over 8 months
+- CI/CD pipeline reduces deployment time from ~20 min (manual) to ~4 min
+- Security audit cleared with 0 critical vulnerabilities
+- Handles 200+ concurrent users on a 2-core VPS via Redis queuing

@@ -1,0 +1,71 @@
+---
+title: GNS3 Enterprise VLAN & OSPF Lab
+shortDescription: Multi-site enterprise network simulation using GNS3 with MikroTik RouterOS — VLANs, OSPF, inter-VLAN routing, and firewall rules.
+category: Networking
+year: 2025
+image: /images/projects/gns3-vlan-lab.png
+github: ""
+demo: ""
+technologies:
+  - GNS3
+  - MikroTik RouterOS
+  - OSPF
+  - VLAN
+  - 802.1Q
+  - Wireshark
+  - RSTP
+---
+
+# GNS3 Enterprise VLAN & OSPF Lab
+
+## Overview
+A comprehensive network lab simulation built in GNS3, modeling an enterprise with three sites interconnected via OSPF. The topology covers VLAN segmentation, inter-VLAN routing on MikroTik CRS switches, OSPF area design, and firewall chain rules — all verified with packet captures.
+
+## Problem / Context
+As part of MTCNA preparation and hands-on networking practice, I designed a lab that mirrors real-world enterprise requirements: segmented VLANs per department, dynamic routing between sites, and a perimeter firewall policy.
+
+## Topology
+```
+[Site A — HQ]          [Site B — Branch]      [Site C — DC]
+MikroTik CCR2004  <--> MikroTik RB750Gr3  <--> MikroTik CRS326
+  VLAN 10 (Mgmt)         VLAN 20 (Staff)        VLAN 30 (Servers)
+  VLAN 11 (Users)        VLAN 21 (Printer)      VLAN 31 (Backup)
+```
+
+OSPF Area 0 (backbone) links all three sites over simulated WAN links. Each site uses area-specific LSAs. Stub areas configured for branch sites to reduce routing table overhead.
+
+## Key Technical Decisions
+- **MikroTik RouterOS** for all routing/switching (mirrors production gear)
+- **OSPF** over static routing — enables automatic failover on link failure
+- **802.1Q VLAN trunking** between switches; access ports per department
+- **Firewall chains**: input (router itself), forward (transit), output — explicit allow/deny lists
+
+## MikroTik VLAN Configuration
+```routeros
+# Create bridge and VLANs
+/interface bridge add name=bridge1 vlan-filtering=yes
+/interface bridge vlan
+  add bridge=bridge1 tagged=ether1 vlan-ids=10,11,20
+/interface vlan
+  add interface=bridge1 name=vlan10 vlan-id=10
+  add interface=bridge1 name=vlan20 vlan-id=20
+
+# OSPF setup
+/routing ospf instance add name=default router-id=10.0.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=default
+/routing ospf interface-template add area=backbone interfaces=ether2 type=ptp
+```
+
+## Challenges & Fixes
+| Challenge | Fix |
+|-----------|-----|
+| OSPF neighborship flapping on GNS3 | Set hello/dead timer explicitly (hello=10, dead=40) |
+| VLAN tag mismatch between switches | Enabled vlan-filtering on bridge + verified with packet capture |
+| Inter-VLAN traffic blocked | Added IP routes per VLAN interface + firewall forward accept rule |
+| STP loops in ring topology | Enabled RSTP on bridge; designated port manually set |
+
+## Results
+- Full inter-VLAN routing working across all 3 sites
+- OSPF convergence time <3s on link failure
+- All firewall policies validated against intended traffic flows
+- Documentation written for each RouterOS config block

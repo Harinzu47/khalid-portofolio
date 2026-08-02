@@ -1,0 +1,56 @@
+---
+title: ESG Sentiment Analysis System
+shortDescription: NLP pipeline using fine-tuned BERT to classify sentiment from ESG-related news, reports, and social media at scale.
+category: AI
+year: 2024
+image: /images/projects/esg-sentiment.png
+github: "https://github.com/Harinzu47/ESG_Sentiment"
+demo: ""
+technologies:
+  - Python
+  - Transformers
+  - Streamlit
+  - Pandas
+  - BERT
+  - NLP
+  - Scikit-learn
+---
+
+# ESG Sentiment Analysis System
+
+## Overview
+Proyek ini bertujuan untuk menganalisis sentimen dari berbagai sumber data (berita, laporan tahunan, dan media sosial) terkait kriteria Environmental, Social, and Governance (ESG). Sistem ini membantu investor dan perusahaan dalam memantau risiko reputasi dan kepatuhan ESG secara real-time.
+
+## Problem Statement
+Klien membutuhkan cara otomatis untuk menganalisis volume data tekstual yang besar guna menentukan persepsi publik dan tingkat risiko terkait isu-isu ESG, yang sebelumnya dilakukan secara manual dan memakan waktu lama.
+
+## Solution Architecture
+- **Data Pipeline**: Pipeline ETL otomatis yang memproses 500K+ record data tekstual dari berbagai API berita dan laporan publik.
+- **Feature Engineering**: Ekstraksi fitur NLP termasuk TF-IDF, Word Embeddings (Word2Vec/GloVe), dan sentimen skor per kategori ESG (E, S, dan G).
+- **Model**: Implementasi model berbasis Transformer (Fine-tuned BERT) untuk klasifikasi sentimen multi-class (Positif, Negatif, Netral).
+- **Deployment**: Dashboard interaktif berbasis **Streamlit** untuk visualisasi tren sentimen dan analisis mendalam (drill-down).
+
+## Technical Stack
+- **Python 3.11** untuk pemrosesan bahasa alami (NLP) dan pemodelan.
+- **Pandas & NumPy** untuk manipulasi data terstruktur.
+- **Hugging Face Transformers** untuk implementasi model BERT.
+- **Scikit-learn** untuk preprocessing dan evaluasi model klasik.
+- **SQL** untuk manajemen data warehouse hasil analisis.
+- **Streamlit** untuk dashboard visualisasi real-time.
+
+## Key Accomplishments
+- Mencapai **akurasi 87%** dan **F1-score 0.82** dalam klasifikasi sentimen spesifik domain keuangan/ESG.
+- Mengidentifikasi 10 indikator risiko ESG utama melalui analisis SHAP untuk transparansi keputusan model.
+- Mengurangi *false positives* sebesar 35% melalui teknik *ensemble learning* pada model klasifikasi.
+- Memproses dan menganalisis data historis selama 2 tahun (lebih dari 2 juta record teks).
+
+## Impact
+- Memungkinkan strategi investasi berbasis data yang lebih cepat dengan pemantauan risiko ESG otomatis.
+- Mengurangi waktu analisis laporan ESG manual hingga 70%.
+- Meningkatkan deteksi dini terhadap isu negatif ESG sebesar 40% sebelum menjadi krisis reputasi.
+
+## Technical Challenges
+- **Data Unstructured**: Menangani ekstraksi teks dari laporan PDF yang kompleks dan data media sosial yang tidak rapi.
+- **Sentiment Nuance**: Mendeteksi nuansa bahasa finansial yang seringkali berbeda dari sentimen umum.
+- **Model Interpretability**: Menggunakan SHAP untuk menjelaskan keputusan model.
+- **Scalability**: Optimasi pipeline untuk memproses 100K artikel berita harian dalam waktu kurang dari 5 menit.

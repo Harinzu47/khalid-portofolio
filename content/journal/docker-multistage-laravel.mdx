@@ -1,0 +1,80 @@
+---
+title: Docker Multi-Stage Builds for Laravel
+date: 2025-08-20
+readTime: ~6 min
+excerpt: How I cut the Laravel Docker image from 800MB to 180MB using multi-stage builds — with the exact Dockerfile.
+tags:
+  - infra
+  - docker
+  - laravel
+  - devops
+---
+
+## The Problem with a Naive Laravel Dockerfile
+
+A simple single-stage Dockerfile for Laravel pulls in Composer, all dev dependencies, build tools, and the Node.js runtime for asset compilation. My initial image was **812MB**. That's slow to push, slow to pull, and a larger attack surface.
+
+Multi-stage builds solve this by using a **builder stage** (fat, with all tools) and a **production stage** (lean, only what the app needs at runtime).
+
+## The Dockerfile
+
+```dockerfile
+# ─── Stage 1: Node asset builder ───────────────────────────────────────────
+FROM node:20-alpine AS node-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# ─── Stage 2: PHP Composer builder ────────────────────────────────────────
+FROM composer:2.7 AS composer-builder
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --ignore-platform-reqs
+
+COPY . .
+RUN composer dump-autoload --optimize
+
+# ─── Stage 3: Production image ────────────────────────────────────────────
+FROM php:8.3-fpm-alpine AS production
+
+# Install only runtime PHP extensions
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    && docker-php-ext-install pdo_mysql opcache
+
+WORKDIR /var/www/html
+
+# Copy only what we need from builders
+COPY --from=composer-builder /app/vendor ./vendor
+COPY --from=composer-builder /app .
+COPY --from=node-builder /app/public/build ./public/build
+
+# Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+```
+
+## Result
+
+| Stage | Image Size |
+|-------|-----------|
+| Before (single stage) | 812 MB |
+| After (multi-stage) | 183 MB |
+
+**77% reduction.** CI pipeline push time dropped from ~4 min to ~55 seconds.
+
+## Key Points
+
+- `--no-dev` on Composer install excludes dev packages (PHPUnit, Faker, etc.)
+- `dump-autoload --optimize` generates a classmap for faster PSR-4 resolution
+- `npm ci` (not `npm install`) for reproducible builds from lockfile
+- Only the final stage ends up in the pushed image — builder stages are discarded

@@ -16,9 +16,12 @@ import {
 } from 'react-icons/si';
 import { IconType } from 'react-icons';
 import { Project } from '@/types';
-import { projects } from '@/data/projects';
 
-type Props = { project: Project };
+type Props = {
+  project: Project;
+  prevProject: Project | null;
+  nextProject: Project | null;
+};
 
 // Tech icon mapping
 const techIcons: Record<string, { icon: IconType; color: string }> = {
@@ -62,13 +65,8 @@ const fadeInUp = {
 /**
  * Project detail page — terminal theme
  */
-export default function ProjectPageClient({ project }: Props) {
+export default function ProjectPageClient({ project, prevProject, nextProject }: Props) {
   const catColor = categoryColor[project.category] ?? 'text-terminal-text-secondary border-terminal-border';
-
-  // Find prev/next for navigation
-  const currentIdx = projects.findIndex((p) => p.slug === project.slug);
-  const prevProject = currentIdx > 0 ? projects[currentIdx - 1] : null;
-  const nextProject = currentIdx < projects.length - 1 ? projects[currentIdx + 1] : null;
 
   return (
     <div className="min-h-screen bg-terminal-bg">

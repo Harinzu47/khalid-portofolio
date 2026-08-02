@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ProjectsGrid } from '@/components/sections/ProjectsGrid';
+import { getAllProjects } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Projects | hzcode',
@@ -11,9 +12,11 @@ export const metadata: Metadata = {
  * /projects — standalone project listing page
  */
 export default function ProjectsPage() {
+  const projects = getAllProjects();
+
   return (
     <main className="min-h-screen bg-terminal-bg pt-20">
-      <ProjectsGrid />
+      <ProjectsGrid projects={projects} />
     </main>
   );
 }

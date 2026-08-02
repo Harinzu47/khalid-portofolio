@@ -1,0 +1,91 @@
+---
+title: MTCNA Exam Prep Notes
+date: 2025-09-12
+readTime: ~12 min
+excerpt: Key topics, gotchas, and lab exercises that helped me pass the MikroTik Certified Network Associate exam.
+tags:
+  - networking
+  - mikrotik
+  - mtcna
+  - certification
+---
+
+## Overview
+
+The MTCNA (MikroTik Certified Network Associate) is a vendor certification covering RouterOS fundamentals. The exam is practical-focused: expect config questions, not just theory. Here are the areas I focused on.
+
+## Topic 1 — Interface & Addressing
+
+Know the difference between:
+- **/ip address** — assigns IP to interface
+- **/ip route** — static routing table
+- Bridge interfaces vs. routed interfaces
+
+```routeros
+# Assign IP to ether1
+/ip address add address=192.168.1.1/24 interface=ether1
+
+# Verify
+/ip address print
+```
+
+## Topic 2 — Firewall Chains
+
+The three chains and when packets hit them:
+- **input** — traffic destined *for the router itself*
+- **forward** — traffic *passing through* the router
+- **output** — traffic *originating from* the router
+
+A common trap: blocking SSH to the router requires an **input** rule, not forward.
+
+```routeros
+# Allow established/related connections (always put first)
+/ip firewall filter add chain=input connection-state=established,related action=accept
+
+# Drop invalid
+/ip firewall filter add chain=input connection-state=invalid action=drop
+
+# Allow SSH from management VLAN only
+/ip firewall filter add chain=input protocol=tcp dst-port=22 src-address=10.0.1.0/24 action=accept
+
+# Drop everything else on input
+/ip firewall filter add chain=input action=drop
+```
+
+## Topic 3 — NAT (Masquerade)
+
+For basic internet sharing:
+
+```routeros
+/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
+```
+
+**Masquerade** vs **src-nat**: masquerade dynamically uses the WAN interface IP (good for DHCP WAN), src-nat requires a static out-address.
+
+## Topic 4 — DHCP Server
+
+```routeros
+/ip pool add name=lan-pool ranges=192.168.88.10-192.168.88.254
+/ip dhcp-server add name=lan interface=bridge1 address-pool=lan-pool disabled=no
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=8.8.8.8
+```
+
+## Topic 5 — Wireless (if applicable)
+
+Know the modes: **ap bridge**, **station bridge**, **station**, **wds slave**. The exam may have a wireless bridging topology question.
+
+## Lab Setup
+
+I used GNS3 with the RouterOS CHR (Cloud-Hosted Router) image. Set up:
+1. Two routers connected back-to-back
+2. Practiced firewall rules until traffic flow was predictable
+3. Added a third router for static routing exercise
+
+## Exam Tips
+
+- Read every question carefully — "which **chain**" is a common trap word
+- Know the winbox shortcut keys for print/detail view
+- Practice `/tool traceroute` and `/tool ping` commands
+- Time management: 25 questions, 30 minutes — don't overthink
+
+Passed on first attempt with 86%. The hands-on lab practice in GNS3 was the difference.
