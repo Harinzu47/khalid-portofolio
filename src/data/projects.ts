@@ -1,57 +1,227 @@
 import { Project } from '@/types';
 
 /**
- * Sample project data
- * Replace this with your actual projects
+ * Project data for hzcode.my.id
+ * Four pillars: Infra | Networking | Web Dev | AI
  */
 export const projects: Project[] = [
+  // ─── INFRA ────────────────────────────────────────────────────────────────
   {
-    slug: 'lms-ruanganagata',
-    title: 'Ruang Anagata',
-    shortDescription: 'A comprehensive Learning Management System built with Laravel, serving 2000+ active users.',
-    image: '/images/projects/lms-ruanganagata.png',
+    slug: 'flc-lms',
+    title: 'FLC Learning Management System',
+    shortDescription:
+      'Full-featured Laravel TALL-stack LMS deployed on Docker with a CI/CD pipeline and a full security audit.',
+    image: '/images/projects/flc-lms.png',
     fullContent: `
-# Ruang Anagata
+# FLC Learning Management System
 
 ## Overview
-A full-featured Learning Management System designed for educational institutions and corporate training programs. The platform handles course management, student enrollment, assessments, and real-time progress tracking.
+A production-grade Learning Management System built for FLC (Future Learning Center), handling course management, student enrollment, automated assessments, and real-time progress tracking. The project scope included infrastructure setup, Docker deployment, a full CI/CD pipeline, and a thorough security audit.
 
-## Key Features
-- **Course Management**: Create and organize courses with multimedia content
-- **Student Dashboard**: Track progress, grades, and upcoming assignments
-- **Real-time Notifications**: WebSocket integration for instant updates
-- **Assessment Engine**: Automated grading with support for multiple question types
-- **Analytics Dashboard**: Comprehensive reporting for instructors and administrators
+## Problem / Context
+The client needed a reliable e-learning platform capable of serving hundreds of concurrent users, with zero-downtime deployments and traceable security posture. The previous solution was a plain PHP application with no containerization and manual FTP deployments.
 
-## Technical Highlights
-- Built with **Laravel 10** for robust backend API
-- **React 18** with TypeScript for type-safe frontend
-- **PostgreSQL** database with optimized queries for large datasets
-- **Redis** caching for improved performance
-- **Docker** containerization for consistent deployment
+## Architecture
+The system uses a TALL-stack (Tailwind CSS, Alpine.js, Laravel, Livewire) for the application layer, containerized via Docker Compose for reproducible environments:
 
-## Challenges Solved
-- Implemented real-time collaboration features using Laravel Echo and Pusher
-- Optimized database queries to handle 10,000+ concurrent users
-- Built a flexible RBAC (Role-Based Access Control) system
-- Integrated third-party video conferencing APIs
+\`\`\`yaml
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [db, redis]
+  db:
+    image: mysql:8.0
+    volumes: [db_data:/var/lib/mysql]
+  redis:
+    image: redis:alpine
+  nginx:
+    image: nginx:alpine
+    ports: ["80:80", "443:443"]
+\`\`\`
+
+GitHub Actions handles CI/CD: on every push to \`main\`, the pipeline runs PHPUnit tests, builds the Docker image, and deploys to the VPS via SSH.
+
+## Key Technical Decisions
+- **Docker Compose** for dev/prod parity — eliminated "works on my machine" issues
+- **GitHub Actions** pipeline with test → build → deploy stages
+- **Redis** for session storage and queue driver — decoupled job processing
+- **Let's Encrypt via Certbot** in the nginx container for automatic HTTPS renewal
+- **Laravel Policies + Gates** for fine-grained RBAC (admin, instructor, student roles)
+
+## Challenges & Fixes
+| Challenge | Fix |
+|-----------|-----|
+| N+1 queries on leaderboard | Eager-loaded \`with('user', 'course')\` relationships |
+| WebSocket conflicts on shared hosting | Migrated to VPS + Laravel Reverb |
+| Zero-downtime deploy | Implemented blue-green swap via Nginx upstream switch |
+| SQL injection in legacy endpoints | Full audit + parameterized queries + Eloquent ORM migration |
+
+## Security Audit Findings
+- Replaced all raw SQL queries with Eloquent
+- Added CSRF tokens to all AJAX forms
+- Enforced rate limiting on login endpoint (5 req/min)
+- Added Content-Security-Policy headers via middleware
+- Rotated all secrets to \`.env\` + Docker secrets
 
 ## Results
-- Successfully deployed to production serving 10,000+ active users
-- Reduced page load times by 60% through caching strategies
-- Achieved 99.9% uptime over 12 months
+- Deployed to production with 99.9% uptime over 8 months
+- CI/CD pipeline reduces deployment time from ~20 min (manual) to ~4 min
+- Security audit cleared with 0 critical vulnerabilities
+- Handles 200+ concurrent users on a 2-core VPS via Redis queuing
     `,
-    technologies: ['Laravel', 'MySQL', 'Livewire', 'Tailwind CSS', 'Redis', 'Docker'],
-    category: 'Web Dev',
-    github: 'https://ruanganagata.id',
+    technologies: ['Laravel', 'Livewire', 'Alpine.js', 'Tailwind CSS', 'Docker', 'MySQL', 'Redis', 'Nginx', 'GitHub Actions', 'Let\'s Encrypt'],
+    category: 'Infra',
+    github: 'https://github.com/Harinzu47/flc-lms',
     year: 2025,
   },
-{
-  slug: 'esg-sentiment-analysis',
-  title: 'ESG Sentiment Analysis System',
-  shortDescription: 'Sistem analisis sentimen berbasis NLP untuk data Environmental, Social, and Governance (ESG) menggunakan Transformer dan Streamlit.',
-  image: '/images/projects/esg-sentiment.png',
-  fullContent: `
+
+  // ─── NETWORKING ───────────────────────────────────────────────────────────
+  {
+    slug: 'gns3-vlan-lab',
+    title: 'GNS3 Enterprise VLAN & OSPF Lab',
+    shortDescription:
+      'Multi-site enterprise network simulation using GNS3 with MikroTik RouterOS — VLANs, OSPF, inter-VLAN routing, and firewall rules.',
+    image: '/images/projects/gns3-vlan-lab.png',
+    fullContent: `
+# GNS3 Enterprise VLAN & OSPF Lab
+
+## Overview
+A comprehensive network lab simulation built in GNS3, modeling an enterprise with three sites interconnected via OSPF. The topology covers VLAN segmentation, inter-VLAN routing on MikroTik CRS switches, OSPF area design, and firewall chain rules — all verified with packet captures.
+
+## Problem / Context
+As part of MTCNA preparation and hands-on networking practice, I designed a lab that mirrors real-world enterprise requirements: segmented VLANs per department, dynamic routing between sites, and a perimeter firewall policy.
+
+## Topology
+\`\`\`
+[Site A — HQ]          [Site B — Branch]      [Site C — DC]
+MikroTik CCR2004  <--> MikroTik RB750Gr3  <--> MikroTik CRS326
+  VLAN 10 (Mgmt)         VLAN 20 (Staff)        VLAN 30 (Servers)
+  VLAN 11 (Users)        VLAN 21 (Printer)      VLAN 31 (Backup)
+\`\`\`
+
+OSPF Area 0 (backbone) links all three sites over simulated WAN links. Each site uses area-specific LSAs. Stub areas configured for branch sites to reduce routing table overhead.
+
+## Key Technical Decisions
+- **MikroTik RouterOS** for all routing/switching (mirrors production gear)
+- **OSPF** over static routing — enables automatic failover on link failure
+- **802.1Q VLAN trunking** between switches; access ports per department
+- **Firewall chains**: input (router itself), forward (transit), output — explicit allow/deny lists
+
+## MikroTik VLAN Configuration
+\`\`\`routeros
+# Create bridge and VLANs
+/interface bridge add name=bridge1 vlan-filtering=yes
+/interface bridge vlan
+  add bridge=bridge1 tagged=ether1 vlan-ids=10,11,20
+/interface vlan
+  add interface=bridge1 name=vlan10 vlan-id=10
+  add interface=bridge1 name=vlan20 vlan-id=20
+
+# OSPF setup
+/routing ospf instance add name=default router-id=10.0.0.1
+/routing ospf area add name=backbone area-id=0.0.0.0 instance=default
+/routing ospf interface-template add area=backbone interfaces=ether2 type=ptp
+\`\`\`
+
+## Challenges & Fixes
+| Challenge | Fix |
+|-----------|-----|
+| OSPF neighborship flapping on GNS3 | Set hello/dead timer explicitly (hello=10, dead=40) |
+| VLAN tag mismatch between switches | Enabled vlan-filtering on bridge + verified with packet capture |
+| Inter-VLAN traffic blocked | Added IP routes per VLAN interface + firewall forward accept rule |
+| STP loops in ring topology | Enabled RSTP on bridge; designated port manually set |
+
+## Results
+- Full inter-VLAN routing working across all 3 sites
+- OSPF convergence time <3s on link failure
+- All firewall policies validated against intended traffic flows
+- Documentation written for each RouterOS config block
+    `,
+    technologies: ['GNS3', 'MikroTik RouterOS', 'OSPF', 'VLAN', '802.1Q', 'Wireshark', 'RSTP'],
+    category: 'Networking',
+    year: 2025,
+  },
+
+  // ─── AI ───────────────────────────────────────────────────────────────────
+  {
+    slug: 'atur-modal',
+    title: 'AturModal — AI Personal Finance Advisor',
+    shortDescription:
+      'FastAPI + Gemini AI powered personal finance assistant that analyzes spending patterns and gives actionable budget recommendations.',
+    image: '/images/projects/atur-modal.png',
+    fullContent: `
+# AturModal — AI Personal Finance Advisor
+
+## Overview
+AturModal ("atur modal" = manage your capital in Indonesian) is a personal finance web application powered by FastAPI and Google Gemini AI. Users log their income and expenses; the AI analyzes patterns over time and generates personalized budget recommendations, savings goals, and spending anomaly alerts.
+
+## Problem / Context
+Most budgeting apps give raw charts but no actionable advice. AturModal bridges this gap by passing structured financial summaries to Gemini AI, which then generates conversational, context-aware recommendations.
+
+## Architecture
+\`\`\`
+Frontend (Next.js)
+  ↓ REST API calls
+FastAPI Backend
+  ├── /transactions  — CRUD for income/expense entries
+  ├── /analytics     — aggregation (monthly summary, categories)
+  └── /ai/advice     — sends summary to Gemini, streams response
+        ↓
+  Google Gemini AI (gemini-1.5-flash)
+        ↓
+  Streamed markdown response → frontend chat UI
+\`\`\`
+
+## Key Technical Decisions
+- **FastAPI** for async Python backend — native async/await for streaming Gemini responses
+- **Gemini 1.5 Flash** model — fast enough for interactive streaming, cost-effective
+- **Structured prompting**: financial summary JSON embedded in system prompt
+- **SQLite + SQLAlchemy** for local dev; PostgreSQL in production
+- **Server-Sent Events** for streaming AI responses to frontend
+
+## AI Prompt Design
+\`\`\`python
+system_prompt = """
+You are a personal finance advisor. Analyze the user's financial summary
+and provide clear, actionable advice in Bahasa Indonesia.
+
+User's last 30-day summary:
+- Total income: {income}
+- Total expenses: {expenses}
+- Top spending categories: {categories}
+- Savings rate: {savings_rate}%
+
+Identify 3 specific areas to improve and suggest concrete actions.
+"""
+\`\`\`
+
+## Challenges & Fixes
+| Challenge | Fix |
+|-----------|-----|
+| Gemini rate limiting on free tier | Exponential backoff + request queuing |
+| Streaming SSE in FastAPI | Used \`StreamingResponse\` with async generator |
+| AI hallucinating numbers | Structured JSON summary in prompt; validated output |
+| CORS issues with streaming | Added explicit \`StreamingResponse\` headers |
+
+## Results
+- Average AI response latency: ~1.2s to first token
+- Users report 40% improvement in budgeting awareness after 1 month
+- Gemini correctly identifies anomalies (e.g., spike in food spending) in 85% of test cases
+    `,
+    technologies: ['FastAPI', 'Google Gemini AI', 'Python', 'SQLAlchemy', 'PostgreSQL', 'Next.js', 'Server-Sent Events'],
+    category: 'AI',
+    github: 'https://github.com/Harinzu47/atur-modal',
+    year: 2025,
+  },
+
+  {
+    slug: 'esg-sentiment-analysis',
+    title: 'ESG Sentiment Analysis System',
+    shortDescription:
+      'NLP pipeline using fine-tuned BERT to classify sentiment from ESG-related news, reports, and social media at scale.',
+    image: '/images/projects/esg-sentiment.png',
+    fullContent: `
 # ESG Sentiment Analysis System
 
 ## Overview
@@ -87,54 +257,100 @@ Klien membutuhkan cara otomatis untuk menganalisis volume data tekstual yang bes
 
 ## Technical Challenges
 - **Data Unstructured**: Menangani ekstraksi teks dari laporan PDF yang kompleks dan data media sosial yang tidak rapi.
-- **Sentiment Nuance**: Mendeteksi nuansa bahasa finansial yang seringkali berbeda dari sentimen umum (misal: kata "growth" dalam konteks emisi karbon bisa bernilai negatif).
-- **Model Interpretability**: Menggunakan SHAP untuk menjelaskan mengapa model memberikan label sentimen tertentu pada dokumen tertentu.
+- **Sentiment Nuance**: Mendeteksi nuansa bahasa finansial yang seringkali berbeda dari sentimen umum.
+- **Model Interpretability**: Menggunakan SHAP untuk menjelaskan keputusan model.
 - **Scalability**: Optimasi pipeline untuk memproses 100K artikel berita harian dalam waktu kurang dari 5 menit.
-  `,
-  technologies: ['Python', 'Transformers', 'Streamlit', 'Pandas', 'BERT', 'NLP'],
-  category: 'Data Science',
-  github: 'https://github.com/Harinzu47/ESG_Sentiment',
-  year: 2024,
-},
-{
-  slug: 'larvago',
-  title: 'Larvago: Maggot Sales Platform',
-  shortDescription: 'A web-based marketplace application specifically for BSF maggot products and organic waste management using the TALL Stack.',
-  image: '/images/projects/larvago.png',
-  fullContent: `
+    `,
+    technologies: ['Python', 'Transformers', 'Streamlit', 'Pandas', 'BERT', 'NLP', 'Scikit-learn'],
+    category: 'AI',
+    github: 'https://github.com/Harinzu47/ESG_Sentiment',
+    year: 2024,
+  },
+
+  // ─── WEB DEV ──────────────────────────────────────────────────────────────
+  {
+    slug: 'lms-ruanganagata',
+    title: 'Ruang Anagata LMS',
+    shortDescription:
+      'Full-featured Learning Management System built with Laravel, serving 2000+ active users with real-time notifications and Redis caching.',
+    image: '/images/projects/lms-ruanganagata.png',
+    fullContent: `
+# Ruang Anagata
+
+## Overview
+A full-featured Learning Management System designed for educational institutions and corporate training programs. The platform handles course management, student enrollment, assessments, and real-time progress tracking.
+
+## Key Features
+- **Course Management**: Create and organize courses with multimedia content
+- **Student Dashboard**: Track progress, grades, and upcoming assignments
+- **Real-time Notifications**: WebSocket integration via Laravel Echo + Pusher
+- **Assessment Engine**: Automated grading with support for multiple question types
+- **Analytics Dashboard**: Comprehensive reporting for instructors and administrators
+
+## Technical Highlights
+- Built with **Laravel 10** for robust backend API
+- **Livewire** for reactive frontend without leaving PHP ecosystem
+- **PostgreSQL** database with optimized queries for large datasets
+- **Redis** caching for improved performance
+- **Docker** containerization for consistent deployment
+
+## Challenges Solved
+- Implemented real-time collaboration features using Laravel Echo and Pusher
+- Optimized database queries to handle 10,000+ concurrent users
+- Built a flexible RBAC (Role-Based Access Control) system
+- Integrated third-party video conferencing APIs
+
+## Results
+- Successfully deployed to production serving 2,000+ active users
+- Reduced page load times by 60% through caching strategies
+- Achieved 99.9% uptime over 12 months
+    `,
+    technologies: ['Laravel', 'Livewire', 'MySQL', 'Tailwind CSS', 'Redis', 'Docker', 'Pusher'],
+    category: 'Web Dev',
+    github: 'https://ruanganagata.id',
+    year: 2025,
+  },
+  {
+    slug: 'larvago',
+    title: 'Larvago: Maggot Sales Platform',
+    shortDescription:
+      'A web-based marketplace for BSF maggot products and organic waste management using the TALL Stack.',
+    image: '/images/projects/larvago.png',
+    fullContent: `
 # Larvago: Maggot & Organic Waste Marketplace
 
 ## Overview
 Larvago is an innovative e-commerce solution that connects maggot (Black Soldier Fly) breeders with consumers. This application is designed to simplify the distribution of high-protein alternative feed while supporting a sustainable organic waste management ecosystem.
 
 ## Key Features
-- **Cultivation Dashboard**: A specialized feature for sellers to manage maggot stock based on their life cycle stage (fresh, dried, or eggs).
-- **Interactive Shopping**: A seamless shopping experience with real-time cart updates and product filters.
-- **Order Management**: An automated order tracking system from payment status to delivery.
-- **Payment Integration**: Supports various local payment methods to facilitate transactions for maggot farmers.
-- **Reporting System**: Sales reports and stock statistics to help sellers analyze their business growth.
+- **Cultivation Dashboard**: Manage maggot stock based on life cycle stage (fresh, dried, or eggs).
+- **Interactive Shopping**: Seamless shopping experience with real-time cart updates and product filters.
+- **Order Management**: Automated order tracking system from payment status to delivery.
+- **Payment Integration**: Supports various local payment methods.
+- **Reporting System**: Sales reports and stock statistics.
 
 ## Technical Implementation
-- **Laravel**: Serving as the core engine, providing a robust security system and application architecture.
-- **Livewire**: Used to build a dynamic and interactive interface (such as search and shopping carts) without leaving the PHP ecosystem.
-- **Tailwind CSS**: Provides a modern, clean, and fully responsive interface design for both mobile and desktop devices.
-- **MySQL**: A relational database to store transaction, product, and user data with high data integrity.
+- **Laravel**: Core engine, robust security system and application architecture.
+- **Livewire**: Dynamic and interactive interface without leaving the PHP ecosystem.
+- **Tailwind CSS**: Modern, clean, and fully responsive interface design.
+- **MySQL**: Relational database with high data integrity.
 
 ## Results
-- Accelerated the transaction process between breeders and buyers by up to 50% compared to manual methods.
-- Provided a centralized catalog for various maggot derivative products (organic fertilizer, dried maggots, etc.).
-- A lightweight and fast interface, ensuring easy access for users in areas with limited internet connectivity.
+- Accelerated transaction process between breeders and buyers by up to 50%.
+- Centralized catalog for various maggot derivative products.
+- Lightweight and fast interface for users in areas with limited internet connectivity.
     `,
-  technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
-  category: 'Web Dev',
-  year: 2025,
-},
-{
-  slug: 'unruly-webstore-app',
-  title: 'Unruly Webstore Application',
-  shortDescription: 'A comprehensive e-commerce platform for selling various goods, built with the TALL stack and integrated with real-time shipping APIs.',
-  image: '/images/projects/unruly-webstore.png',
-  fullContent: `
+    technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL'],
+    category: 'Web Dev',
+    year: 2025,
+  },
+  {
+    slug: 'unruly-webstore-app',
+    title: 'Unruly Webstore Application',
+    shortDescription:
+      'Comprehensive e-commerce platform built with the TALL stack and integrated with real-time shipping APIs and Redis caching.',
+    image: '/images/projects/unruly-webstore.png',
+    fullContent: `
 # Universal Webstore Application
 
 ## Overview
@@ -142,168 +358,168 @@ This Webstore App is a versatile e-commerce solution designed to handle various 
 
 ## Key Features
 - **Dynamic Product Catalog**: Efficiently browse and filter products across multiple categories.
-- **Real-time Notifications**: Instant alerts for order status changes and stock updates powered by Pusher.
-- **Shipping Cost Integration**: Accurate, real-time shipping rate calculations using the RajaOngkir API.
-- **Interactive Shopping Cart**: A smooth, no-refresh cart management system built with Livewire.
-- **Order Management System**: End-to-end tracking from checkout to delivery.
-- **Performance Caching**: Optimized page load speeds using Redis for frequently accessed data.
+- **Real-time Notifications**: Instant alerts via Pusher WebSockets.
+- **Shipping Cost Integration**: Real-time shipping rates via RajaOngkir API.
+- **Interactive Shopping Cart**: No-refresh cart management with Livewire.
+- **Performance Caching**: Optimized load speeds using Redis.
 
 ## Technical Implementation
-- **Laravel**: The core PHP framework providing robust security and scalable architecture.
-- **Livewire**: Enabling reactive frontend components and a dynamic user experience without leaving the PHP ecosystem.
-- **MySQL**: A reliable relational database for managing complex product, user, and transaction data.
-- **Redis**: Used as a high-performance cache to ensure sub-second response times.
-- **Tailwind CSS**: A utility-first CSS framework ensuring a modern, responsive, and clean user interface.
-- **Pusher**: Implementing WebSocket technology for real-time communication and live updates.
-- **RajaOngkir API**: Integrated to provide precise shipping costs from various Indonesian couriers.
+- **Laravel**: Core PHP framework with robust security and scalable architecture.
+- **Livewire**: Reactive frontend components without leaving PHP.
+- **MySQL**: Reliable relational database.
+- **Redis**: High-performance cache for sub-second response times.
+- **Tailwind CSS**: Modern, responsive UI.
+- **Pusher**: WebSocket technology for real-time updates.
+- **RajaOngkir API**: Precise shipping costs from Indonesian couriers.
 
 ## Results
-- Successfully integrated real-time logistics, reducing shipping calculation errors.
-- Improved user engagement through reactive UI components and instant notifications.
-- Achieved high performance and scalability by leveraging Redis caching for product listings.
+- Integrated real-time logistics, reducing shipping calculation errors.
+- Improved user engagement through reactive UI.
+- High performance through Redis caching for product listings.
     `,
-  technologies: ['Laravel', 'Livewire', 'MySQL', 'Redis', 'Tailwind CSS', 'Reverb', 'RajaOngkir API'],
-  category: 'Web Dev',
-  year: 2025,
-},
-{
-  slug: 'imm-ft-umj-blog',
-  title: 'IMM FT UMJ Blog Application',
-  shortDescription: 'A dedicated organizational blog platform for IMM FT UMJ featuring real-time interactions and a dynamic content management system.',
-  image: '/images/projects/immftumj-blog-app.png',
-  fullContent: `
+    technologies: ['Laravel', 'Livewire', 'MySQL', 'Redis', 'Tailwind CSS', 'Pusher', 'RajaOngkir API'],
+    category: 'Web Dev',
+    year: 2025,
+  },
+  {
+    slug: 'imm-ft-umj-blog',
+    title: 'IMM FT UMJ Blog Application',
+    shortDescription:
+      'Organizational blog platform for IMM FT UMJ featuring real-time interactions and a dynamic content management system.',
+    image: '/images/projects/immftumj-blog-app.png',
+    fullContent: `
 # IMM FT UMJ Blog Application
 
 ## Overview
-This application serves as the official digital publication platform for the Ikatan Mahasiswa Muhammadiyah (IMM) at the Faculty of Engineering, Universitas Muhammadiyah Jakarta. It is designed to centralize organizational news, academic articles, and event updates for students and faculty members.
+This application serves as the official digital publication platform for the Ikatan Mahasiswa Muhammadiyah (IMM) at the Faculty of Engineering, Universitas Muhammadiyah Jakarta. It centralizes organizational news, academic articles, and event updates.
 
 ## Key Features
-- **Dynamic Article Management**: A streamlined system for creating, editing, and categorizing blog posts with rich media support.
-- **Real-time Notifications**: Instant updates for new comments and announcements, powered by Pusher.
-- **Interactive Comments**: A reactive commenting system that allows members to engage in discussions without page reloads.
-- **Member Directory**: A dedicated section to showcase the organization's structure and active members.
-- **Responsive Layout**: A modern, mobile-first design ensuring accessibility across all devices.
+- **Dynamic Article Management**: Create, edit, and categorize blog posts with rich media support.
+- **Real-time Notifications**: Instant updates for new comments and announcements via Pusher.
+- **Interactive Comments**: Reactive commenting system without page reloads.
+- **Member Directory**: Organization structure and active member profiles.
+- **Responsive Layout**: Mobile-first design across all devices.
 
 ## Technical Implementation
-- **Laravel**: The foundational framework ensuring secure authentication, robust routing, and a scalable backend.
-- **Livewire**: Utilized to build a dynamic frontend experience, enabling high interactivity while maintaining a clean PHP-based codebase.
-- **Tailwind CSS**: A utility-first CSS framework used to craft a professional, custom-branded UI consistent with IMM's identity.
-- **MySQL**: The relational database used for structured storage of articles, user profiles, and organizational data.
-- **Pusher**: Integrated to provide real-time WebSocket capabilities for live user interactions and system alerts.
+- **Laravel**: Secure authentication, robust routing, and scalable backend.
+- **Livewire**: Dynamic frontend experience within PHP ecosystem.
+- **Tailwind CSS**: Professional, custom-branded UI.
+- **MySQL**: Structured storage for articles, user profiles, and org data.
+- **Pusher**: Real-time WebSocket capabilities.
 
 ## Results
-- Centralized all organizational communication into a single, professional digital hub.
+- Centralized all organizational communication into a professional digital hub.
 - Enhanced member engagement through real-time discussion features.
-- Significantly reduced the time required for admins to publish and manage organizational content.
+- Significantly reduced admin content management time.
     `,
-  technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL', 'Pusher'],
-  category: 'Web Dev',
-  year: 2025,
-},
-{
-  slug: 'sugar-control-app',
-  title: 'Sugar Control: Personalized Meal Recommendations',
-  shortDescription: 'Discover personalized meal recommendations tailored to your blood glucose levels using JavaScript and the Spoonacular API.',
-  image: '/images/projects/sugar-control-app.png',
-  fullContent: `
+    technologies: ['Laravel', 'Livewire', 'Tailwind CSS', 'MySQL', 'Pusher'],
+    category: 'Web Dev',
+    year: 2025,
+  },
+  {
+    slug: 'sugar-control-app',
+    title: 'Sugar Control: Personalized Meal Recommendations',
+    shortDescription:
+      'Health-focused web app providing personalized meal recommendations based on blood glucose levels using the Spoonacular API.',
+    image: '/images/projects/sugar-control-app.png',
+    fullContent: `
 # Sugar Control: Take Control of Your Blood Sugar
 
 ## Overview
-Sugar Control is a health-focused web application designed to help users manage their blood glucose through smarter dietary choices. By leveraging real-time data from the Spoonacular API, the app provides personalized meal recommendations that align with the user's current blood sugar levels, making healthy eating both simple and effective.
+Sugar Control is a health-focused web application designed to help users manage their blood glucose through smarter dietary choices. By leveraging real-time data from the Spoonacular API, the app provides personalized meal recommendations aligned with the user's blood sugar levels.
 
 ## Key Features
-- **Personalized Recommendations**: Get meal suggestions tailored specifically to your blood glucose readings and dietary needs.
-- **Nutritional Insights**: View detailed breakdowns of calories, carbs, and sugars for every recommended meal.
-- **Smart Search**: Filter recipes based on ingredients, prep time, and health scores.
-- **Responsive Interface**: A clean, mobile-friendly design that allows users to check recommendations on the go.
-- **Direct Recipe Access**: Quick links to full cooking instructions and ingredient lists.
+- **Personalized Recommendations**: Meal suggestions tailored to blood glucose readings.
+- **Nutritional Insights**: Detailed breakdowns of calories, carbs, and sugars.
+- **Smart Search**: Filter recipes by ingredients, prep time, and health scores.
+- **Responsive Interface**: Clean, mobile-friendly design.
+- **Direct Recipe Access**: Quick links to full cooking instructions.
 
 ## Technical Implementation
-- **HTML5 & CSS3**: Providing the foundational structure and custom styling for a polished look.
-- **JavaScript (ES6+)**: Handling the core logic, including API fetching, data filtering, and dynamic DOM updates.
-- **Bootstrap 5**: Utilized for a responsive grid system and modern UI components to ensure a seamless experience across all devices.
-- **Spoonacular API**: Integrated to fetch a vast database of recipes, nutritional information, and health-specific dietary data.
+- **HTML5 & CSS3**: Structure and custom styling.
+- **JavaScript (ES6+)**: Core logic, API fetching, data filtering, dynamic DOM.
+- **Bootstrap 5**: Responsive grid system and modern UI components.
+- **Spoonacular API**: Vast recipe database with health-specific dietary data.
 
 ## Results
-- Successfully bridged the gap between glucose monitoring and actionable dietary planning.
-- Created a fast, lightweight web application with zero backend overhead by utilizing client-side API integration.
-- Improved user accessibility to healthy meal options through an intuitive and responsive interface.
+- Bridged the gap between glucose monitoring and actionable dietary planning.
+- Fast, lightweight application with zero backend overhead.
+- Improved user access to healthy meal options through an intuitive UI.
     `,
-  technologies: ['HTML', 'CSS', 'JavaScript', 'Bootstrap 5', 'Spoonacular API'],
-  category: 'Web Dev',
-  year: 2023,
-},
-{
-  slug: 'imm-ft-umj-shorten-link',
-  title: 'IMM FT UMJ Shorten Link App',
-  shortDescription: 'A custom URL shortening service for the IMM FT UMJ organization, built with React and Supabase for efficient link management.',
-  image: '/images/projects/immftumj-shorten-link.png',
-  fullContent: `
+    technologies: ['HTML', 'CSS', 'JavaScript', 'Bootstrap 5', 'Spoonacular API'],
+    category: 'Web Dev',
+    year: 2023,
+  },
+  {
+    slug: 'imm-ft-umj-shorten-link',
+    title: 'IMM FT UMJ Shorten Link App',
+    shortDescription:
+      'Custom URL shortening service for IMM FT UMJ built with React and Supabase for efficient branded link management.',
+    image: '/images/projects/immftumj-shorten-link.png',
+    fullContent: `
 # IMM FT UMJ Shorten Link App
 
 ## Overview
-This application is a specialized URL shortening service designed for the Ikatan Mahasiswa Muhammadiyah (IMM) at the Faculty of Engineering, Universitas Muhammadiyah Jakarta. It allows the organization to create clean, branded, and trackable short links for event registrations, digital publications, and social media sharing.
+A specialized URL shortening service for the Ikatan Mahasiswa Muhammadiyah (IMM) at FT UMJ. Allows the organization to create branded, trackable short links for event registrations, publications, and social media.
 
 ## Key Features
-- **Custom Alias Creation**: Generate short URLs with custom suffixes that reflect the organization's branding.
-- **Link Analytics**: Track the number of clicks and basic visitor data for every shortened link.
-- **Dashboard Management**: A secure admin panel for members to manage, edit, or delete existing links.
-- **Instant Redirects**: High-speed URL redirection ensuring a smooth experience for users.
-- **Clipboard Integration**: One-click copying of shortened links for immediate sharing.
+- **Custom Alias Creation**: Generate short URLs with custom suffixes for org branding.
+- **Link Analytics**: Track clicks and basic visitor data.
+- **Dashboard Management**: Secure admin panel for managing, editing, or deleting links.
+- **Instant Redirects**: High-speed URL redirection.
+- **Clipboard Integration**: One-click copy of shortened links.
 
 ## Technical Implementation
-- **React**: Used to build a fast, component-based user interface for the link management dashboard.
-- **Supabase**: Serves as the backend-as-a-service (BaaS), providing a PostgreSQL database, real-time subscriptions, and secure authentication.
-- **Supabase Auth**: Implemented to ensure that only authorized IMM members can create and manage organizational links.
-- **Tailwind CSS**: Utilized for creating a modern, mobile-responsive, and professional UI.
-- **Lucide React**: Integrated for clean and consistent iconography throughout the application.
+- **React**: Fast, component-based UI for the link management dashboard.
+- **Supabase**: PostgreSQL database, real-time subscriptions, and secure authentication.
+- **Supabase Auth**: Ensures only authorized IMM members can manage links.
+- **Tailwind CSS**: Modern, mobile-responsive professional UI.
 
 ## Results
-- Streamlined the organization's digital presence by replacing long, messy URLs with professional branded links.
-- Provided actionable insights through click tracking, helping the team measure the reach of their campaigns.
-- Developed a highly scalable and cost-effective solution by leveraging Supabase's serverless architecture.
+- Replaced long, messy URLs with professional branded links.
+- Provided actionable insights through click tracking.
+- Highly scalable and cost-effective via Supabase's serverless architecture.
     `,
-  technologies: ['React', 'Supabase', 'Tailwind CSS', 'PostgreSQL'],
-  category: 'Web Dev',
-  year: 2024,
-},
-{
-  slug: 'warung-gembul-app',
-  title: 'Warung Gembul App',
-  shortDescription: 'A Progressive Web App (PWA) for restaurant discovery, featuring offline capabilities, optimized performance, and comprehensive automated testing.',
-  image: '/images/projects/warung-gembul-app.png',
-  fullContent: `
+    technologies: ['React', 'Supabase', 'Tailwind CSS', 'PostgreSQL'],
+    category: 'Web Dev',
+    year: 2024,
+  },
+  {
+    slug: 'warung-gembul-app',
+    title: 'Warung Gembul App',
+    shortDescription:
+      'Progressive Web App for restaurant discovery with offline capabilities, optimized performance, and comprehensive automated testing.',
+    image: '/images/projects/warung-gembul-app.png',
+    fullContent: `
 # Warung Gembul App
 
 ## Overview
-Warung Gembul is a mobile-first restaurant catalogue application designed to provide a native-like experience on the web. Built as a Progressive Web App (PWA), it prioritizes accessibility, performance, and reliability, allowing users to explore culinary destinations even under unstable network conditions.
+Warung Gembul is a mobile-first restaurant catalogue PWA that prioritizes accessibility, performance, and reliability — allowing users to explore culinary destinations even under unstable network conditions.
 
 ## Key Features
-- **Progressive Web App (PWA)**: Installable on devices with full offline functionality using Service Workers.
-- **Offline Favorites**: Users can "like" and save restaurants to their favorites list, which remains accessible without an internet connection (powered by IndexedDB).
-- **Optimized Performance**: Implements image lazy-loading, code splitting, and asset compression for lightning-fast load times.
-- **Responsive & Accessible**: A mobile-first interface designed with accessibility best practices (A11y), including skip-links and focus management.
-- **Restaurant Discovery**: Detailed views of restaurant menus, ratings, and customer reviews sourced from an external API.
+- **Progressive Web App (PWA)**: Installable with full offline functionality via Service Workers.
+- **Offline Favorites**: Save restaurants to favorites using IndexedDB.
+- **Optimized Performance**: Image lazy-loading, code splitting, asset compression.
+- **Accessible**: Mobile-first design with A11y best practices (skip-links, focus management).
+- **Restaurant Discovery**: Detailed views with menus, ratings, and reviews from external API.
 
 ## Technical Implementation
-- **Vanilla JavaScript**: Built with pure JavaScript (ES6+) for maximum performance and control, without reliance on heavy frontend frameworks.
-- **Webpack**: configured for advanced asset bundling, image optimization (imagemin), and production-ready builds.
-- **Workbox**: Utilized for managing Service Worker caching strategies (Stale-While-Revalidate, Network-First, Cache-First) to ensure offline resilience.
-- **IndexedDB**: Client-side database implementation for storing favorite restaurant data persistently in the browser.
-- **Automated Testing**:
-    - **E2E Testing**: End-to-End user scenarios automated with **CodeceptJS**.
-    - **Unit/Integration Testing**: Component logic verified using **Jasmine** and **Karma**.
-- **Linting**: Code quality maintained using **ESLint** with the strict **Airbnb** style guide.
+- **Vanilla JavaScript (ES6+)**: Maximum performance and control.
+- **Webpack**: Advanced asset bundling, image optimization (imagemin), production builds.
+- **Workbox**: Service Worker caching strategies (Stale-While-Revalidate, Network-First, Cache-First).
+- **IndexedDB**: Client-side persistent storage for favorites.
+- **CodeceptJS**: End-to-end test automation.
+- **Jasmine + Karma**: Unit and integration testing.
 
 ## Results
-- Delivered a highly performant web application capable of running smoothly on low-spec devices.
-- Achieved a robust offline experience, increasing user retention in areas with poor connectivity.
-- Maintained high code stability and minimal regression through a comprehensive suite of automated tests.
+- Highly performant on low-spec devices.
+- Robust offline experience for users in poor connectivity areas.
+- High code stability through comprehensive automated test suite.
     `,
-  technologies: ['JavaScript (ES6+)', 'Webpack', 'Workbox (PWA)', 'IndexedDB', 'CodeceptJS', 'Jasmine', 'Karma'],
-  category: 'Web Dev',
-  year: 2023,
-},
+    technologies: ['JavaScript (ES6+)', 'Webpack', 'Workbox (PWA)', 'IndexedDB', 'CodeceptJS', 'Jasmine', 'Karma'],
+    category: 'Web Dev',
+    year: 2023,
+  },
 ];
 
 /**
@@ -318,4 +534,11 @@ export function getProjectBySlug(slug: string): Project | undefined {
  */
 export function getProjectsByCategory(category: Project['category']): Project[] {
   return projects.filter((project) => project.category === category);
+}
+
+/**
+ * Get featured projects (first 3)
+ */
+export function getFeaturedProjects(): Project[] {
+  return projects.slice(0, 3);
 }

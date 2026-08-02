@@ -8,7 +8,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 /**
- * Reusable Button component with multiple variants
+ * Reusable Button component — terminal flat style
+ * primary  = terminal green border/text
+ * secondary = soft blue border/text
+ * outline  = neutral border
+ * ghost    = no border
  */
 export function Button({
   variant = 'primary',
@@ -21,29 +25,33 @@ export function Button({
     <button
       className={cn(
         // Base styles
-        'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        
+        'inline-flex items-center justify-center font-mono rounded transition-colors duration-150',
+        'focus:outline-none focus:ring-1 focus:ring-offset-2 focus:ring-offset-terminal-bg',
+        'disabled:opacity-40 disabled:cursor-not-allowed',
+
         // Variants
         {
-          'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 focus:ring-blue-500':
+          // primary — green (terminal green)
+          'border border-terminal-primary text-terminal-primary hover:bg-terminal-primary/10 focus:ring-terminal-primary':
             variant === 'primary',
-          'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 focus:ring-purple-500':
+          // secondary — soft blue
+          'border border-terminal-secondary text-terminal-secondary hover:bg-terminal-secondary/10 focus:ring-terminal-secondary':
             variant === 'secondary',
-          'border-2 border-slate-700 hover:border-slate-600 bg-transparent hover:bg-slate-800/50 text-white focus:ring-slate-500':
+          // outline — neutral
+          'border border-terminal-border text-terminal-text-secondary hover:border-terminal-text-muted hover:text-terminal-text-primary focus:ring-terminal-border':
             variant === 'outline',
-          'bg-transparent hover:bg-slate-800/50 text-slate-300 hover:text-white focus:ring-slate-500':
+          // ghost — no border
+          'border-0 text-terminal-text-secondary hover:text-terminal-text-primary focus:ring-terminal-border':
             variant === 'ghost',
         },
-        
+
         // Sizes
         {
-          'px-4 py-2 text-sm gap-2': size === 'sm',
-          'px-6 py-3 text-base gap-2': size === 'md',
-          'px-8 py-4 text-lg gap-3': size === 'lg',
+          'px-3 py-1.5 text-xs gap-1.5': size === 'sm',
+          'px-5 py-2.5 text-sm gap-2':   size === 'md',
+          'px-6 py-3 text-base gap-2.5': size === 'lg',
         },
-        
+
         className
       )}
       {...props}

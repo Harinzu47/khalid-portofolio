@@ -5,136 +5,163 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { projects } from '@/data/projects';
 import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { ProjectCategory } from '@/types';
 import { ArrowRight } from 'lucide-react';
 
 type FilterOption = 'All' | ProjectCategory;
 
+// Category colors for labels and backgrounds
+const categoryStyle: Record<string, { text: string; border: string }> = {
+  'Infra':      { text: 'text-terminal-accent',     border: 'border-terminal-accent/40' },
+  'Networking': { text: 'text-terminal-secondary',  border: 'border-terminal-secondary/40' },
+  'Web Dev':    { text: 'text-terminal-primary',    border: 'border-terminal-primary/40' },
+  'AI':         { text: 'text-terminal-purple',     border: 'border-terminal-purple/40' },
+};
+
+// Filter pill data
+const filters: { option: FilterOption; flag: string }[] = [
+  { option: 'All',        flag: '--all' },
+  { option: 'Infra',      flag: '--infra' },
+  { option: 'Networking', flag: '--networking' },
+  { option: 'Web Dev',    flag: '--web' },
+  { option: 'AI',         flag: '--ai' },
+];
+
 /**
- * Projects grid section with category filtering
+ * Projects grid — CLI flag filters + terminal-styled cards
  */
 export function ProjectsGrid() {
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All');
 
-  const filteredProjects = activeFilter === 'All' 
-    ? projects 
-    : projects.filter(p => p.category === activeFilter);
-
-  const filters: FilterOption[] = ['All', 'Web Dev', 'Data Science'];
+  const filteredProjects =
+    activeFilter === 'All'
+      ? projects
+      : projects.filter((p) => p.category === activeFilter);
 
   return (
     <section className="py-20" id="projects">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            Featured Projects
-          </span>
+        <p className="font-mono text-terminal-primary text-sm mb-2">
+          $ ls projects/ --featured
+        </p>
+        <h2 className="font-mono text-2xl md:text-3xl text-terminal-text-primary mb-4">
+          Projects
         </h2>
-        <p className="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
-          A showcase of my work across software engineering and data science domains
+        <p className="text-terminal-text-secondary mb-10 max-w-2xl">
+          A collection of work across four pillars — Infrastructure, Networking, Web Dev, and AI.
         </p>
 
-        {/* Filter Buttons */}
-        <div className="flex justify-center gap-4 mb-12 flex-wrap">
-          {filters.map((filter) => (
+        {/* Filter row — CLI flags */}
+        <div className="flex flex-wrap gap-2 mb-12 font-mono text-xs">
+          {filters.map(({ option, flag }) => (
             <button
-              key={filter}
-              data-category={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-                activeFilter === filter
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30'
-                  : 'bg-slate-800/50 border border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-800'
+              key={option}
+              data-category={option}
+              onClick={() => setActiveFilter(option)}
+              className={`px-3 py-1.5 rounded border transition-colors ${
+                activeFilter === option
+                  ? 'border-terminal-primary text-terminal-primary bg-terminal-primary/10'
+                  : 'border-terminal-border text-terminal-text-muted hover:border-terminal-text-muted hover:text-terminal-text-secondary'
               }`}
             >
-              {filter}
+              {flag}
             </button>
           ))}
         </div>
 
         {/* Projects Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProjects.map((project, index) => (
-            <Link
-              key={project.slug}
-              href={`/projects/${project.slug}`}
-              className="group"
-            >
-              <Card className="h-full flex flex-col overflow-hidden">
-                {/* Project Thumbnail */}
-                <div className="relative w-full aspect-video -mx-6 -mt-6 mb-4 overflow-hidden">
-                  {project.image ? (
-                    <Image
-                      src={project.image}
-                      alt={project.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <div 
-                      className={`w-full h-full ${
-                        project.category === 'Web Dev'
-                          ? 'bg-gradient-to-br from-blue-600/30 to-blue-900/50'
-                          : 'bg-gradient-to-br from-purple-600/30 to-purple-900/50'
-                      }`}
-                    />
-                  )}
-                  {/* Overlay gradient for smooth transition */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
-                </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => {
+            const catStyle = categoryStyle[project.category] ?? {
+              text: 'text-terminal-text-secondary',
+              border: 'border-terminal-border',
+            };
 
-                {/* Category Badge */}
-                <div className="flex items-center justify-between mb-4">
-                  <Badge 
-                    variant={project.category === 'Web Dev' ? 'primary' : 'secondary'}
-                  >
-                    {project.category}
-                  </Badge>
-                  {project.year && (
-                    <span className="text-sm text-slate-500">{project.year}</span>
-                  )}
-                </div>
+            return (
+              <Link key={project.slug} href={`/projects/${project.slug}`} className="group">
+                <Card className="h-full flex flex-col overflow-hidden p-0">
+                  {/* Thumbnail */}
+                  <div className="relative w-full aspect-video overflow-hidden border-b border-terminal-border">
+                    {project.image ? (
+                      <Image
+                        src={project.image}
+                        alt={project.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 grayscale-[20%]"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-terminal-bg flex items-center justify-center">
+                        <span className={`font-mono text-4xl ${catStyle.text} opacity-30`}>
+                          {project.category === 'Infra'      && '[srv]'}
+                          {project.category === 'Networking' && '[net]'}
+                          {project.category === 'Web Dev'    && '[web]'}
+                          {project.category === 'AI'         && '[ai]'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Project Title */}
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-400 transition-colors">
-                  {project.title}
-                </h3>
+                  <div className="p-5 flex flex-col flex-grow">
+                    {/* Category + year */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span
+                        className={`font-mono text-xs border px-2 py-0.5 rounded ${catStyle.text} ${catStyle.border}`}
+                      >
+                        {project.category}
+                      </span>
+                      {project.year && (
+                        <span className="font-mono text-xs text-terminal-text-muted">
+                          {project.year}
+                        </span>
+                      )}
+                    </div>
 
-                {/* Short Description */}
-                <p className="text-slate-400 mb-6 flex-grow">
-                  {project.shortDescription}
-                </p>
+                    {/* Title */}
+                    <h3 className="font-mono text-base text-terminal-text-primary mb-2 group-hover:text-terminal-secondary transition-colors">
+                      {project.title}
+                    </h3>
 
-                {/* Technologies */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.technologies.slice(0, 4).map((tech) => (
-                    <Badge key={tech} variant="default">
-                      {tech}
-                    </Badge>
-                  ))}
-                  {project.technologies.length > 4 && (
-                    <Badge variant="default">
-                      +{project.technologies.length - 4}
-                    </Badge>
-                  )}
-                </div>
+                    {/* Description */}
+                    <p className="text-terminal-text-secondary text-sm mb-4 flex-grow leading-relaxed">
+                      {project.shortDescription}
+                    </p>
 
-                {/* View Project Link */}
-                <div className="flex items-center gap-2 text-blue-400 group-hover:gap-3 transition-all">
-                  <span className="text-sm font-medium">View Case Study</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </Card>
-            </Link>
-          ))}
+                    {/* Tech chips */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {project.technologies.slice(0, 4).map((tech) => (
+                        <span
+                          key={tech}
+                          className="font-mono text-xs px-2 py-0.5 border border-terminal-border text-terminal-text-muted rounded bg-terminal-bg"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {project.technologies.length > 4 && (
+                        <span className="font-mono text-xs px-2 py-0.5 border border-terminal-border text-terminal-text-muted rounded bg-terminal-bg">
+                          +{project.technologies.length - 4}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Link */}
+                    <div className="flex items-center gap-1.5 text-terminal-secondary font-mono text-xs group-hover:gap-2.5 transition-all">
+                      <span>&gt; view case study</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
 
-        {/* Empty State */}
+        {/* Empty state */}
         {filteredProjects.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-slate-400 text-lg">No projects found in this category.</p>
+            <p className="font-mono text-terminal-text-muted text-sm">
+              No projects found for this filter.
+            </p>
           </div>
         )}
       </div>

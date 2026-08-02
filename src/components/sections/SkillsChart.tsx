@@ -1,101 +1,96 @@
 'use client';
 
-import { ResponsiveRadar } from '@nivo/radar';
+interface SkillRow {
+  category: string;
+  tools: string;
+  level: string;
+  levelColor: string;
+}
 
-const skillsData = [
-  { skill: 'Frontend', level: 90 },
-  { skill: 'Backend', level: 85 },
-  { skill: 'Data Science', level: 80 },
-  { skill: 'Project Management', level: 85 },
-  { skill: 'Database', level: 85 },
+const skillsMatrix: SkillRow[] = [
+  {
+    category:   'Infrastructure',
+    tools:      'Linux, Docker, Nginx, GitHub Actions, SSH/VPS',
+    level:      'Proficient',
+    levelColor: 'text-terminal-primary border-terminal-primary/40',
+  },
+  {
+    category:   'Networking',
+    tools:      'MikroTik RouterOS, Cisco, GNS3, VLAN, OSPF, BGP',
+    level:      'MTCNA',
+    levelColor: 'text-terminal-secondary border-terminal-secondary/40',
+  },
+  {
+    category:   'Web Dev',
+    tools:      'Laravel, Next.js, React, PHP, TypeScript, Livewire',
+    level:      'Proficient',
+    levelColor: 'text-terminal-primary border-terminal-primary/40',
+  },
+  {
+    category:   'AI / ML',
+    tools:      'Python, FastAPI, Gemini AI, Hugging Face, BERT',
+    level:      'Learning',
+    levelColor: 'text-terminal-text-muted border-terminal-border',
+  },
+  {
+    category:   'Database',
+    tools:      'MySQL, PostgreSQL, Redis, Supabase, SQLite',
+    level:      'Proficient',
+    levelColor: 'text-terminal-primary border-terminal-primary/40',
+  },
+  {
+    category:   'DevOps',
+    tools:      'Docker Compose, CI/CD, Certbot, Cloudflare, Let\'s Encrypt',
+    level:      'Proficient',
+    levelColor: 'text-terminal-primary border-terminal-primary/40',
+  },
 ];
 
 /**
- * Skills distribution chart using Nivo Radar
- * Modern, smooth, and elegant design
+ * Skills matrix — flat terminal table replacing the Nivo radar chart
  */
 export function SkillsChart() {
   return (
-    <div className="w-full h-[400px]">
-      <ResponsiveRadar
-        data={skillsData}
-        keys={['level']}
-        indexBy="skill"
-        maxValue={100}
-        margin={{ top: 60, right: 80, bottom: 40, left: 80 }}
-        // Circular grid for smooth appearance
-        gridShape="circular"
-        // Smooth curved lines
-        curve="catmullRomClosed"
-        // Border styling
-        borderColor="#3b82f6"
-        borderWidth={2}
-        // Fill styling with transparency
-        colors={['#3b82f6']}
-        fillOpacity={0.35}
-        blendMode="normal"
-        // Enable dots at vertices
-        enableDots={true}
-        dotSize={8}
-        dotColor="#1e293b"
-        dotBorderWidth={2}
-        dotBorderColor="#3b82f6"
-        // Grid levels
-        gridLevels={5}
-        gridLabelOffset={24}
-        // Dark mode theme customization
-        theme={{
-          axis: {
-            ticks: {
-              text: {
-                fill: '#94a3b8',
-                fontSize: 13,
-                fontWeight: 500,
-              },
-            },
-          },
-          grid: {
-            line: {
-              stroke: '#334155',
-              strokeWidth: 1,
-            },
-          },
-          tooltip: {
-            container: {
-              background: '#1e293b',
-              color: '#e2e8f0',
-              fontSize: 14,
-              borderRadius: 8,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-              border: '1px solid #334155',
-            },
-          },
-        }}
-        // Animation
-        animate={true}
-        motionConfig="gentle"
-        // Value format
-        valueFormat={(value) => `${value}%`}
-        // Interactivity
-        isInteractive={true}
-        // Slot props for labels
-        sliceTooltip={({ index, data }) => (
-          <div
-            style={{
-              background: '#1e293b',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid #334155',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-            }}
-          >
-            <strong style={{ color: '#e2e8f0' }}>{index}</strong>
-            <div style={{ color: '#94a3b8', marginTop: '4px' }}>
-              Skill Level: <span style={{ color: '#3b82f6', fontWeight: 600 }}>{data[0].value}%</span>
-            </div>
-          </div>
-        )}
-      />
+    <div className="w-full overflow-x-auto">
+      <table className="w-full border-collapse font-mono text-sm">
+        <thead>
+          <tr className="border-b border-terminal-border">
+            <th className="text-left py-3 pr-6 text-terminal-text-muted font-normal tracking-wider text-xs uppercase">
+              Category
+            </th>
+            <th className="text-left py-3 pr-6 text-terminal-text-muted font-normal tracking-wider text-xs uppercase">
+              Tools &amp; Technologies
+            </th>
+            <th className="text-left py-3 text-terminal-text-muted font-normal tracking-wider text-xs uppercase">
+              Level
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {skillsMatrix.map((row, idx) => (
+            <tr
+              key={row.category}
+              className={`border-b border-terminal-border/50 ${
+                idx % 2 === 0 ? 'bg-terminal-bg/50' : 'bg-terminal-surface/50'
+              }`}
+            >
+              <td className="py-3 pr-6 text-terminal-text-primary whitespace-nowrap">
+                {row.category}
+              </td>
+              <td className="py-3 pr-6 text-terminal-text-secondary leading-relaxed">
+                {row.tools}
+              </td>
+              <td className="py-3">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded border text-xs ${row.levelColor}`}
+                >
+                  {row.level}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

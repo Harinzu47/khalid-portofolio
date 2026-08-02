@@ -7,15 +7,15 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Base Card component with glassmorphism effect
+ * Base Card component — terminal flat style (no glassmorphism)
  */
 export function Card({ children, hover = true, className, ...props }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl p-6',
-        'transition-all duration-300',
-        hover && 'hover:border-slate-700 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1',
+        'bg-terminal-surface border border-terminal-border rounded p-6',
+        'transition-colors duration-200',
+        hover && 'hover:border-terminal-text-muted',
         className
       )}
       {...props}

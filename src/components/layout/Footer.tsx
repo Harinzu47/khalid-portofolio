@@ -1,92 +1,108 @@
-import { Github, Linkedin, Mail, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { Github, Linkedin, Mail } from 'lucide-react';
+
+const quickLinks = [
+  { href: '/projects', label: 'projects' },
+  { href: '/journal',  label: 'journal' },
+  { href: '/#about',   label: 'about' },
+  { href: '/#contact', label: 'contact' },
+];
+
+const socialLinks = [
+  {
+    href:  'https://github.com/Harinzu47',
+    label: 'GitHub',
+    icon:  Github,
+  },
+  {
+    href:  'https://www.linkedin.com/in/khalid-jundullah-8086b8249',
+    label: 'LinkedIn',
+    icon:  Linkedin,
+  },
+  {
+    href:  'mailto:harinzu47@gmail.com',
+    label: 'Email',
+    icon:  Mail,
+  },
+];
 
 /**
- * Footer component
+ * Footer — terminal style with HZCODE_KERNEL branding
  */
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 py-12" id="contact">
+    <footer
+      className="bg-terminal-bg border-t border-terminal-border py-12"
+      id="contact"
+    >
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="grid md:grid-cols-3 gap-10 mb-10">
+
           {/* Brand */}
           <div>
-            <h3 className="text-2xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Khalid
-              </span>
-            </h3>
-            <p className="text-slate-400">
-              Fullstack Developer & Data Scientist passionate about creating impactful solutions.
+            <Link
+              href="/"
+              className="font-mono text-xl font-bold text-terminal-primary block mb-3"
+            >
+              ~/hzcode
+            </Link>
+            <p className="text-terminal-text-secondary text-sm leading-relaxed">
+              Network &amp; Infrastructure Engineer transitioning into Fullstack Development.
+              Covering Infra, Networking, Web Dev, and AI.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-mono text-terminal-text-muted text-xs uppercase tracking-widest mb-4">
+              // quick links
+            </h4>
             <ul className="space-y-2">
-              <li>
-                <a href="#about" className="text-slate-400 hover:text-white transition-colors">
-                  About
-                </a>
-              </li>
-              <li>
-                <a href="#projects" className="text-slate-400 hover:text-white transition-colors">
-                  Projects
-                </a>
-              </li>
-              <li>
-                <a href="#contact" className="text-slate-400 hover:text-white transition-colors">
-                  Contact
-                </a>
-              </li>
+              {quickLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="font-mono text-sm text-terminal-text-secondary hover:text-terminal-secondary transition-colors"
+                  >
+                    &gt; {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Get In Touch</h4>
-            <div className="flex gap-4">
-              <a
-                href="https://github.com/yourusername"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                aria-label="GitHub"
-              >
-                <Github className="w-5 h-5 text-slate-300" />
-              </a>
-              <a
-                href="https://linkedin.com/in/yourusername"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5 text-slate-300" />
-              </a>
-              <a
-                href="mailto:your.email@example.com"
-                className="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="w-5 h-5 text-slate-300" />
-              </a>
+            <h4 className="font-mono text-terminal-text-muted text-xs uppercase tracking-widest mb-4">
+              // get in touch
+            </h4>
+            <div className="flex gap-3 mb-4">
+              {socialLinks.map(({ href, label, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target={href.startsWith('mailto') ? undefined : '_blank'}
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 flex items-center justify-center border border-terminal-border text-terminal-text-secondary hover:border-terminal-text-muted hover:text-terminal-text-primary rounded transition-colors"
+                  aria-label={label}
+                >
+                  <Icon className="w-4 h-4" />
+                </a>
+              ))}
             </div>
-            <p className="text-slate-400 mt-4">
-              <a href="mailto:your.email@example.com" className="hover:text-white transition-colors">
-                your.email@example.com
-              </a>
-            </p>
+            <a
+              href="mailto:harinzu47@gmail.com"
+              className="font-mono text-sm text-terminal-secondary hover:text-terminal-secondary/80 transition-colors"
+            >
+              harinzu47@gmail.com
+            </a>
           </div>
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-slate-800 pt-8 text-center">
-          <p className="text-slate-500 flex items-center justify-center gap-2">
-            © {currentYear} Khalid. Built with{' '}
-            <Heart className="w-4 h-4 text-red-500 fill-current" /> using Next.js & TypeScript
+        <div className="border-t border-terminal-border pt-6 text-center">
+          <p className="font-mono text-terminal-text-muted text-xs tracking-widest">
+            © 2026 HZCODE_KERNEL — ALL_SYSTEMS_GO
           </p>
         </div>
       </div>

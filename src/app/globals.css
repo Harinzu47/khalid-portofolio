@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #020617;
-  --foreground: #f1f5f9;
+  --background: #0d1117;
+  --foreground: #e6edf3;
 }
 
 * {
@@ -27,12 +27,8 @@ body {
 
 /* Marquee Animation */
 @keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
 }
 
 .animate-marquee {
@@ -43,31 +39,78 @@ body {
   animation-play-state: paused;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
+/* Terminal cursor blink */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
-::-webkit-scrollbar-track {
-  background: #0f172a;
+.cursor-blink::after {
+  content: '_';
+  animation: blink 1s step-end infinite;
+  color: #7ee787;
 }
 
+/* Terminal typing effect */
+@keyframes typing {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* Custom Scrollbar — terminal style */
+::-webkit-scrollbar       { width: 8px; }
+::-webkit-scrollbar-track { background: #0d1117; }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 5px;
+  background: #30363d;
+  border-radius: 2px;
 }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
-}
-
-/* Selection */
+/* Selection — green tint */
 ::selection {
-  background-color: rgba(59, 130, 246, 0.3);
-  color: #ffffff;
+  background-color: rgba(126, 231, 135, 0.2);
+  color: #e6edf3;
 }
 
-/* Recharts Tooltip Override */
-.recharts-tooltip-wrapper {
-  outline: none;
+/* Prose overrides for terminal markdown */
+.prose-terminal {
+  color: #e6edf3;
+}
+.prose-terminal h1,
+.prose-terminal h2,
+.prose-terminal h3 {
+  font-family: var(--font-jetbrains-mono), monospace;
+  color: #e6edf3;
+}
+.prose-terminal code {
+  font-family: var(--font-jetbrains-mono), monospace;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: #79c0ff;
+  font-size: 0.875em;
+}
+.prose-terminal pre {
+  background: #0d1117!important;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+}
+.prose-terminal a {
+  color: #79c0ff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-terminal blockquote {
+  border-left: 2px solid #7ee787;
+  background: #0d1117;
+  padding: 0.75rem 1rem;
+  border-radius: 0 4px 4px 0;
+  color: #8b949e;
+}
+.prose-terminal hr {
+  border-color: #30363d;
+}
+.prose-terminal strong {
+  color: #e6edf3;
 }

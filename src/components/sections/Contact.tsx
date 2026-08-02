@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-// Paste your Web3Forms Access Key here
+// Web3Forms access key
 const ACCESS_KEY = '431a62b6-12d8-4d27-a40f-a862a881d837';
 
 type FormData = {
@@ -16,10 +16,10 @@ type FormData = {
 type FormStatus = 'idle' | 'loading' | 'success' | 'error';
 
 /**
- * Contact form section with Web3Forms integration
+ * Contact form section — terminal style with Web3Forms integration
  */
 export function Contact() {
-  const [status, setStatus] = useState<FormStatus>('idle');
+  const [status, setStatus]           = useState<FormStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
   const {
@@ -36,16 +36,13 @@ export function Contact() {
     try {
       const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           access_key: ACCESS_KEY,
-          name: data.name,
-          email: data.email,
-          message: data.message,
-          subject: `New Contact from Portfolio: ${data.name}`,
+          name:       data.name,
+          email:      data.email,
+          message:    data.message,
+          subject:    `New Contact from hzcode: ${data.name}`,
         }),
       });
 
@@ -54,7 +51,6 @@ export function Contact() {
       if (result.success) {
         setStatus('success');
         reset();
-        // Reset to idle after 5 seconds
         setTimeout(() => setStatus('idle'), 5000);
       } else {
         setStatus('error');
@@ -66,63 +62,62 @@ export function Contact() {
     }
   };
 
+  const inputClass = (hasError: boolean) =>
+    `w-full px-4 py-2.5 font-mono text-sm bg-terminal-bg border rounded text-terminal-text-primary placeholder-terminal-text-muted
+    focus:outline-none focus:border-terminal-primary transition-colors duration-150
+    ${hasError ? 'border-terminal-accent' : 'border-terminal-border'}`;
+
   return (
     <section className="py-20" id="contact">
-      <div className="max-w-4xl mx-auto px-6">
-        {/* Section Header */}
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            Get In Touch
-          </span>
+      <div className="max-w-2xl mx-auto px-6">
+
+        <p className="font-mono text-terminal-primary text-sm mb-2">
+          $ ping harinzu47@gmail.com
+        </p>
+        <h2 className="font-mono text-2xl md:text-3xl text-terminal-text-primary mb-4">
+          Get In Touch
         </h2>
-        <p className="text-slate-400 text-center mb-12 max-w-2xl mx-auto">
-          Have a project in mind or want to collaborate? Feel free to reach out!
+        <p className="text-terminal-text-secondary mb-10">
+          Have a project in mind or want to collaborate? Drop a message below.
         </p>
 
-        {/* Contact Form */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 backdrop-blur-sm">
+        {/* Form card */}
+        <div className="border border-terminal-border rounded bg-terminal-surface p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Name Field */}
+
+            {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
-                Name <span className="text-red-400">*</span>
+              <label htmlFor="name" className="block font-mono text-xs text-terminal-text-muted mb-2 uppercase tracking-wider">
+                // name <span className="text-terminal-accent">*</span>
               </label>
               <input
                 type="text"
                 id="name"
-                placeholder="Your name"
-                className={`w-full px-4 py-3 bg-slate-800/50 border rounded-lg text-white placeholder-slate-500 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 
-                  transition-all duration-200 ${
-                    errors.name ? 'border-red-500' : 'border-slate-700'
-                  }`}
+                placeholder="your name"
+                className={inputClass(!!errors.name)}
                 {...register('name', {
                   required: 'Name is required',
                   minLength: { value: 2, message: 'Name must be at least 2 characters' },
                 })}
               />
               {errors.name && (
-                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
+                <p className="mt-1.5 text-xs text-terminal-accent font-mono flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.name.message}
                 </p>
               )}
             </div>
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                Email <span className="text-red-400">*</span>
+              <label htmlFor="email" className="block font-mono text-xs text-terminal-text-muted mb-2 uppercase tracking-wider">
+                // email <span className="text-terminal-accent">*</span>
               </label>
               <input
                 type="email"
                 id="email"
-                placeholder="your.email@example.com"
-                className={`w-full px-4 py-3 bg-slate-800/50 border rounded-lg text-white placeholder-slate-500 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 
-                  transition-all duration-200 ${
-                    errors.email ? 'border-red-500' : 'border-slate-700'
-                  }`}
+                placeholder="you@example.com"
+                className={inputClass(!!errors.email)}
                 {...register('email', {
                   required: 'Email is required',
                   pattern: {
@@ -132,86 +127,68 @@ export function Contact() {
                 })}
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
+                <p className="mt-1.5 text-xs text-terminal-accent font-mono flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.email.message}
                 </p>
               )}
             </div>
 
-            {/* Message Field */}
+            {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-slate-300 mb-2">
-                Message <span className="text-red-400">*</span>
+              <label htmlFor="message" className="block font-mono text-xs text-terminal-text-muted mb-2 uppercase tracking-wider">
+                // message <span className="text-terminal-accent">*</span>
               </label>
               <textarea
                 id="message"
                 rows={5}
                 placeholder="Tell me about your project or idea..."
-                className={`w-full px-4 py-3 bg-slate-800/50 border rounded-lg text-white placeholder-slate-500 
-                  focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 
-                  transition-all duration-200 resize-none ${
-                    errors.message ? 'border-red-500' : 'border-slate-700'
-                  }`}
+                className={`${inputClass(!!errors.message)} resize-none`}
                 {...register('message', {
                   required: 'Message is required',
                   minLength: { value: 10, message: 'Message must be at least 10 characters' },
                 })}
               />
               {errors.message && (
-                <p className="mt-1 text-sm text-red-400 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" />
+                <p className="mt-1.5 text-xs text-terminal-accent font-mono flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
                   {errors.message.message}
                 </p>
               )}
             </div>
 
-            {/* Error Message */}
+            {/* Error */}
             {status === 'error' && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                <p className="text-red-400 text-sm">{errorMessage}</p>
+              <div className="p-4 border border-terminal-accent/30 bg-terminal-accent/5 rounded font-mono text-sm text-terminal-accent flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p>{errorMessage}</p>
               </div>
             )}
 
-            {/* Success Message */}
+            {/* Success */}
             {status === 'success' && (
-              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <p className="text-green-400 text-sm">
-                  Thank you! Your message has been sent successfully. I&apos;ll get back to you soon.
-                </p>
+              <div className="p-4 border border-terminal-primary/30 bg-terminal-primary/5 rounded font-mono text-sm text-terminal-primary flex items-start gap-3">
+                <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <p>Message sent. I&apos;ll get back to you soon.</p>
               </div>
             )}
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={status === 'loading' || status === 'success'}
-              className={`w-full py-4 px-6 rounded-lg font-semibold text-white transition-all duration-300 
-                flex items-center justify-center gap-2 ${
-                  status === 'loading'
-                    ? 'bg-blue-600/50 cursor-not-allowed'
-                    : status === 'success'
-                    ? 'bg-green-600 cursor-default'
-                    : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40'
-                }`}
+              className={`w-full py-3 px-6 rounded font-mono text-sm flex items-center justify-center gap-2 border transition-colors duration-150 ${
+                status === 'success'
+                  ? 'border-terminal-primary text-terminal-primary bg-terminal-primary/10 cursor-default'
+                  : 'border-terminal-primary text-terminal-primary hover:bg-terminal-primary/10 disabled:opacity-40 disabled:cursor-not-allowed'
+              }`}
             >
               {status === 'loading' ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Sending...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /> sending...</>
               ) : status === 'success' ? (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Message Sent!
-                </>
+                <><CheckCircle className="w-4 h-4" /> sent</>
               ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Send Message
-                </>
+                <><Send className="w-4 h-4" /> [./send-message]</>
               )}
             </button>
           </form>

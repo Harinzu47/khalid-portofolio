@@ -2,58 +2,102 @@
 
 import { SkillsChart } from './SkillsChart';
 
+const stats = [
+  { value: 'MTCNA', label: 'Certified', color: 'text-terminal-secondary' },
+  { value: '11+',   label: 'Projects',  color: 'text-terminal-primary' },
+  { value: '4',     label: 'Pillars',   color: 'text-terminal-purple' },
+];
+
+const timeline = [
+  { date: '2025', title: 'MTCNA Certified',              desc: 'MikroTik Certified Network Associate' },
+  { date: '2025', title: 'Laravel + Docker Production',  desc: 'FLC LMS — CI/CD pipeline deployed to VPS' },
+  { date: '2024', title: 'Fullstack Web Developer',      desc: 'Multiple production deployments (LMS, e-commerce)' },
+  { date: '2023', title: 'Started Networking Studies',   desc: 'Universitas Muhammadiyah Jakarta, Teknik Informatika' },
+  { date: '2023', title: 'First Web Project',            desc: 'Sugar Control App — HTML/CSS/JS + Spoonacular API' },
+];
+
 /**
- * About section with bio and skills visualization
+ * About section — bio, skills matrix, experience timeline
  */
 export function About() {
   return (
     <section className="py-20" id="about">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          <span className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            About Me
-          </span>
+        <p className="font-mono text-terminal-primary text-sm mb-2">
+          $ cat about.md
+        </p>
+        <h2 className="font-mono text-2xl md:text-3xl text-terminal-text-primary mb-12">
+          About Me
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Bio Text */}
+        <div className="grid md:grid-cols-2 gap-14 items-start">
+
+          {/* Bio */}
           <div className="space-y-6">
-            <p className="text-slate-300 text-lg leading-relaxed">
-              I'm a <span className="text-blue-400 font-semibold">Fullstack Developer</span> and{' '}
-              <span className="text-purple-400 font-semibold">Data Scientist</span> with a passion
-              for building scalable web applications and extracting actionable insights from data.
+            <p className="text-terminal-text-secondary leading-relaxed">
+              I&apos;m a{' '}
+              <span className="text-terminal-secondary font-medium">Network &amp; Infrastructure Engineer</span>{' '}
+              (MTCNA certified) based in Jakarta, Indonesia, actively expanding into{' '}
+              <span className="text-terminal-primary font-medium">fullstack web development</span>{' '}
+              and AI-powered applications.
             </p>
-            <p className="text-slate-400 leading-relaxed">
-              On the software side, I specialize in creating modern web applications using{' '}
-              <strong className="text-white">React, Next.js, and Laravel</strong>. I focus on
-              building intuitive user interfaces and robust backend systems that scale.
+            <p className="text-terminal-text-secondary leading-relaxed">
+              My work spans four pillars:{' '}
+              <span className="text-terminal-accent">Infrastructure</span> (Docker, Nginx, CI/CD),{' '}
+              <span className="text-terminal-secondary">Networking</span> (MikroTik RouterOS, OSPF, VLAN),{' '}
+              <span className="text-terminal-primary">Web Dev</span> (Laravel, Next.js), and{' '}
+              <span className="text-terminal-purple">AI</span> (FastAPI + Gemini AI).
             </p>
-            <p className="text-slate-400 leading-relaxed">
-              In data science, I leverage <strong className="text-white">Python, TensorFlow, and
-              machine learning algorithms</strong> to solve complex problems. From predictive
-              modeling to data visualization, I turn raw data into strategic advantages.
+            <p className="text-terminal-text-secondary leading-relaxed">
+              I document what I learn in my{' '}
+              <a href="/journal" className="text-terminal-secondary hover:underline">
+                journal
+              </a>{' '}
+              — fixes, setup guides, exam notes, and ops learnings from real projects.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <p className="text-2xl font-bold text-blue-400">5+</p>
-                <p className="text-sm text-slate-400">Years Experience</p>
-              </div>
-              <div className="px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
-                <p className="text-2xl font-bold text-purple-400">20+</p>
-                <p className="text-sm text-slate-400">Projects Completed</p>
-              </div>
-              <div className="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
-                <p className="text-2xl font-bold text-green-400">10+</p>
-                <p className="text-sm text-slate-400">Technologies</p>
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-4 pt-2">
+              {stats.map((s) => (
+                <div
+                  key={s.label}
+                  className="px-4 py-3 border border-terminal-border bg-terminal-surface rounded"
+                >
+                  <p className={`font-mono text-xl font-bold ${s.color}`}>{s.value}</p>
+                  <p className="font-mono text-xs text-terminal-text-muted mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Timeline */}
+            <div className="pt-4">
+              <p className="font-mono text-terminal-text-muted text-xs uppercase tracking-widest mb-4">
+                // experience &amp; certifications
+              </p>
+              <div className="space-y-4">
+                {timeline.map((item, i) => (
+                  <div key={i} className="flex gap-4">
+                    <span className="font-mono text-xs text-terminal-text-muted pt-0.5 whitespace-nowrap">
+                      [{item.date}]
+                    </span>
+                    <div>
+                      <p className="font-mono text-sm text-terminal-text-primary">
+                        <span className="text-terminal-primary mr-1">&gt;</span>
+                        {item.title}
+                      </p>
+                      <p className="text-xs text-terminal-text-secondary mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Skills Chart */}
-          <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-xl p-8">
-            <h3 className="text-xl font-semibold text-white mb-6 text-center">
-              Skills Distribution
-            </h3>
+          {/* Skills Matrix */}
+          <div className="border border-terminal-border bg-terminal-surface rounded p-6">
+            <p className="font-mono text-terminal-text-muted text-xs uppercase tracking-widest mb-6">
+              // skills matrix
+            </p>
             <SkillsChart />
           </div>
         </div>
