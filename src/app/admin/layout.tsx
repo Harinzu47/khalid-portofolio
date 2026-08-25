@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { requireAuth } from '@/lib/auth';
 import { AdminShell } from '@/components/admin/AdminShell';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Admin Console — Personal Developer OS',
   description: 'Master administrative workspace for Personal Developer OS.',

@@ -1,6 +1,8 @@
 import { AnalyticsService } from '@/services/analytics.service';
 import { Activity, Database, Server, HardDrive, ShieldAlert, BarChart3, Layers } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminMetricsPage() {
   const metrics = await AnalyticsService.getSystemMetrics();
 
