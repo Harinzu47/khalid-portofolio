@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Github, Linkedin, Mail } from 'lucide-react';
 
 const quickLinks = [
@@ -30,6 +33,13 @@ const socialLinks = [
  * Footer — terminal style with HZCODE_KERNEL branding
  */
 export function Footer() {
+  const pathname = usePathname();
+
+  // Hide public Footer on admin workspace
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer
       className="bg-terminal-bg border-t border-terminal-border py-12"

@@ -65,6 +65,11 @@ export function Navbar() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  // Hide public Navbar on admin workspace
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <nav
       className={cn(
