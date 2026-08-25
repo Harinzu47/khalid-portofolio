@@ -3,14 +3,19 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Github, Linkedin, Mail } from 'lucide-react';
+import { Menu, X, Github, Linkedin, Mail, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 
 const navLinks = [
   { href: '/projects', label: 'projects' },
+  { href: '/articles', label: 'articles' },
   { href: '/journal',  label: 'journal' },
+  { href: '/graph',    label: 'graph' },
+  { href: '/roadmap',  label: 'roadmap' },
+  { href: '/terminal', label: 'cli' },
+  { href: '/certificates', label: 'credentials' },
   { href: '/#about',   label: 'about' },
-  { href: '/#contact', label: 'contact' },
 ];
 
 const socialLinks = [
@@ -97,6 +102,27 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Search Trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(
+                  new KeyboardEvent('keydown', { key: 'k', ctrlKey: true })
+                );
+              }}
+              className="inline-flex items-center space-x-2 px-2.5 py-1 rounded bg-terminal-surface border border-terminal-border text-xs font-mono text-terminal-text-muted hover:text-terminal-text-primary hover:border-terminal-primary transition-colors"
+              title="Search OS (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="text-[11px]">Search</span>
+              <kbd className="text-[10px] px-1 rounded bg-terminal-bg border border-terminal-border">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Theme & CRT Controls */}
+            <ThemeSwitcher />
 
             {/* Social icons */}
             <div className="flex items-center gap-4 pl-4 border-l border-terminal-border">

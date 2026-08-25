@@ -28,7 +28,6 @@ export function ResponsiveImage({
     <figure className="my-8">
       <div className="border border-terminal-border rounded overflow-hidden bg-terminal-surface">
         {isExternal ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={src}
             alt={alt}

@@ -1,0 +1,43 @@
+name: Database Schema & Migration Check
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'src/db/schema/**'
+      - 'src/db/migrations/**'
+      - 'drizzle.config.ts'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'src/db/schema/**'
+      - 'src/db/migrations/**'
+      - 'drizzle.config.ts'
+
+jobs:
+  db-check:
+    name: Verify Drizzle Migrations Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install --legacy-peer-deps
+
+      - name: Verify Schema Generation
+        run: npx drizzle-kit generate
+
+      - name: Check for Uncommitted Migration Drift
+        run: git diff --exit-code src/db/migrations

@@ -9,23 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Terminal design system — hzcode.my.id
+        // Dynamic Terminal Theme System (Mapped to CSS custom properties)
         terminal: {
-          bg:         "#0d1117", // near-black background
-          surface:    "#161b22", // card / panel background
-          "surface-alt": "#21262d", // slightly lighter surface
-          border:     "#30363d", // 1px borders
-          primary:    "#7ee787", // terminal green (prompts, highlights, active)
-          secondary:  "#79c0ff", // soft blue (links, tags)
-          accent:     "#f78166", // warm red (Infra category, errors)
-          purple:     "#d2a8ff", // purple (AI category)
-          "text-primary":   "#e6edf3", // main readable text
-          "text-secondary": "#8b949e", // muted descriptions
-          "text-muted":     "#484f58", // timestamps, subtle labels
+          bg: "var(--terminal-bg)",
+          surface: "var(--terminal-surface)",
+          "surface-alt": "var(--terminal-surface-alt)",
+          border: "var(--terminal-border)",
+          primary: "var(--terminal-primary)",
+          secondary: "var(--terminal-secondary)",
+          accent: "var(--terminal-accent)",
+          purple: "var(--terminal-purple)",
+          warning: "var(--terminal-warning)",
+          "text-primary": "var(--terminal-text-primary)",
+          "text-secondary": "var(--terminal-text-secondary)",
+          "text-muted": "var(--terminal-text-muted)",
         },
-        // Keep these for any residual usage
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: "var(--terminal-bg)",
+        foreground: "var(--terminal-text-primary)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],

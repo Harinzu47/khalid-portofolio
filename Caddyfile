@@ -1,0 +1,21 @@
+# Caddy Reverse Proxy Configuration for Personal Developer OS
+{
+  email harinzu47@gmail.com
+}
+
+hzcode.my.id, www.hzcode.my.id {
+  encode zstd gzip
+
+  # Reverse proxy to the standalone Next.js node server
+  reverse_proxy app:3000
+
+  # Security headers
+  header {
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    X-Frame-Options "DENY"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    X-XSS-Protection "1; mode=block"
+  }
+}

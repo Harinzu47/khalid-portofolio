@@ -1,8 +1,21 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import dynamic from 'next/dynamic';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { SkipToContent } from '@/components/ui/SkipToContent';
+import { A11yAnnouncerProvider } from '@/components/ui/A11yAnnouncer';
+import { ThemeProvider } from '@/lib/theme-context';
+import { getPersonSchema } from '@/lib/json-ld';
+
+const GlobalCommandPalette = dynamic(
+  () => import('@/components/ui/GlobalCommandPalette').then((m) => m.GlobalCommandPalette)
+);
+
+const GlobalTerminalModal = dynamic(
+  () => import('@/components/terminal/GlobalTerminalModal').then((m) => m.GlobalTerminalModal)
+);
 
 const inter = Inter({
   subsets: ['latin'],
@@ -58,9 +71,20 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased bg-terminal-bg text-terminal-text-primary">
-        <Navbar />
-        {children}
-        <Footer />
+        <ThemeProvider>
+          <A11yAnnouncerProvider>
+            <SkipToContent />
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(getPersonSchema()) }}
+            />
+            <Navbar />
+            <div id="main-content">{children}</div>
+            <Footer />
+            <GlobalCommandPalette />
+            <GlobalTerminalModal />
+          </A11yAnnouncerProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,14 +1,16 @@
 import type { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://hzcode.my.id';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hzcode.my.id';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: '/api/',
-    },
+    rules: [
+      {
+        userAgent: '*',
+        allow: ['/', '/api/health', '/api/og'],
+        disallow: ['/admin/', '/api/'],
+      },
+    ],
     sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

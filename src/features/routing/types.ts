@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { ContentNode, ContentNodeType } from '../knowledge/types';
 
 export type LayoutType =
