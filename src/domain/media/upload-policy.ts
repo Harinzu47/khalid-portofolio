@@ -19,11 +19,14 @@ export interface FileValidationResult {
  * Strips path traversal characters, spaces, and non-alphanumeric unsafe symbols.
  */
 export function sanitizeFilename(originalName: string): string {
-  const parsed = path.parse(originalName);
-  const ext = parsed.ext.toLowerCase();
-  const base = parsed.name
+  // Normalize backslashes to forward slashes for cross-platform POSIX & Windows safety
+  const normalized = originalName.replace(/\\/g, '/');
+  const basename = path.basename(normalized);
+  const ext = path.extname(basename).toLowerCase();
+  const nameWithoutExt = basename.slice(0, basename.length - ext.length);
+  const base = nameWithoutExt
     .normalize('NFKD')
-    .replace(/[^\w.-]/g, '_')
+    .replace(/[^\w-]/g, '_')
     .replace(/_{2,}/g, '_')
     .replace(/^_+|_+$/g, '')
     .slice(0, 100);
