@@ -4,7 +4,7 @@
 
 export const CSP_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
@@ -26,9 +26,13 @@ export const SECURITY_HEADERS: Record<string, string> = {
 
 /**
  * Applies all security headers to a Response or Headers object.
+ * HSTS is applied strictly in production environments to safeguard local HTTP development.
  */
 export function applySecurityHeaders(headers: Headers): void {
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (key === 'Strict-Transport-Security' && process.env.NODE_ENV !== 'production') {
+      continue;
+    }
     headers.set(key, value);
   }
 }

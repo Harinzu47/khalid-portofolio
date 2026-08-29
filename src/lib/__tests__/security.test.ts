@@ -8,6 +8,7 @@ describe('Security & CSP Engine', () => {
     expect(SECURITY_HEADERS['Referrer-Policy']).toBe('strict-origin-when-cross-origin');
     expect(SECURITY_HEADERS['Strict-Transport-Security']).toContain('max-age=63072000');
     expect(SECURITY_HEADERS['Content-Security-Policy']).toContain("default-src 'self'");
+    expect(SECURITY_HEADERS['Content-Security-Policy']).not.toContain("'unsafe-eval'");
   });
 
   it('correctly populates Headers instance with all security headers', () => {
@@ -17,5 +18,6 @@ describe('Security & CSP Engine', () => {
     expect(headers.get('X-Frame-Options')).toBe('DENY');
     expect(headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(headers.get('Content-Security-Policy')).toBeDefined();
+    expect(headers.get('Content-Security-Policy')).not.toContain("'unsafe-eval'");
   });
 });

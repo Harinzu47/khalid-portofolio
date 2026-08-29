@@ -55,18 +55,19 @@ jobs:
           rm -f "$BACKUP_FILE"
           echo "✓ Backup encrypted successfully with AES-256. Plaintext dump purged."
 
-      - name: Upload to Cloudflare R2 / S3 Storage
+      - name: Upload to Cloudflare R2 / S3 Storage (Native AWS CLI)
         if: success()
-        uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --acl private --follow-symlinks
         env:
-          AWS_S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          AWS_S3_ENDPOINT: ${{ secrets.R2_ENDPOINT_URL }}
-          SOURCE_DIR: './backups'
-          DEST_DIR: 'database-backups'
+          AWS_DEFAULT_REGION: auto
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+        run: |
+          aws s3 sync ./backups "s3://${R2_BUCKET_NAME}/database-backups" \
+            --endpoint-url "$R2_ENDPOINT_URL" \
+            --acl private \
+            --no-progress
 
       - name: Optional Failure Alert (Best-effort, non-blocking)
         if: failure()
