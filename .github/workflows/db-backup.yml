@@ -1,0 +1,80 @@
+name: Automated Database Backup & Archive
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 02:00 UTC
+  workflow_dispatch:      # Allows manual trigger anytime
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Logical Database Dump & Encrypt
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install PostgreSQL Client Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Execute pg_dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          TIMESTAMP=$(date +'%Y-%m-%d_%H%M%S')
+          mkdir -p ./backups
+          pg_dump "$DATABASE_URL" \
+            --format=custom \
+            --compress=9 \
+            --no-owner \
+            --no-privileges \
+            --file="./backups/backup_${TIMESTAMP}.dump"
+          echo "BACKUP_FILE=./backups/backup_${TIMESTAMP}.dump" >> $GITHUB_ENV
+          echo "BACKUP_NAME=backup_${TIMESTAMP}.dump" >> $GITHUB_ENV
+
+      - name: Encrypt Backup with GPG (Fail-Closed)
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          if [ -z "$PASSPHRASE" ]; then
+            echo "ERROR: BACKUP_ENCRYPTION_PASSPHRASE is not set. Refusing to produce unencrypted backup."
+            exit 1
+          fi
+          # Use pipe to prevent passphrase appearing in process list
+          echo "$PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 "$BACKUP_FILE"
+          
+          # Verify encrypted artifact exists and purge plaintext dump immediately
+          if [ ! -f "${BACKUP_FILE}.gpg" ]; then
+            echo "ERROR: GPG encryption failed. ${BACKUP_FILE}.gpg not found."
+            rm -f "$BACKUP_FILE"
+            exit 1
+          fi
+          rm -f "$BACKUP_FILE"
+          echo "✓ Backup encrypted successfully with AES-256. Plaintext dump purged."
+
+      - name: Upload to Cloudflare R2 / S3 Storage
+        if: success()
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl private --follow-symlinks
+        env:
+          AWS_S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_S3_ENDPOINT: ${{ secrets.R2_ENDPOINT_URL }}
+          SOURCE_DIR: './backups'
+          DEST_DIR: 'database-backups'
+
+      - name: Optional Failure Alert (Best-effort, non-blocking)
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            curl -s -X POST -H 'Content-type: application/json' \
+              --data '{"content":"🚨 **ALERT**: Personal Developer OS automated database backup FAILED!"}' \
+              "${{ secrets.DISCORD_WEBHOOK_URL }}" || true
+          else
+            echo "DISCORD_WEBHOOK_URL not configured. Skipping alert dispatch."
+          fi

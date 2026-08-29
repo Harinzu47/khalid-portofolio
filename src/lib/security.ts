@@ -59,3 +59,38 @@ export function sanitizePublicUrl(url: string | null | undefined): string | null
     return null;
   }
 }
+
+/**
+ * Validates post-login or internal redirection targets to prevent Open Redirect attacks.
+ * Rejects protocol-relative URLs (`//evil.com`), scheme payloads (`javascript:`), and foreign hosts.
+ */
+export function validateSafeRedirectUrl(
+  url: string | null | undefined,
+  fallback = '/admin'
+): string {
+  if (!url || typeof url !== 'string') return fallback;
+  const trimmed = url.trim();
+  if (!trimmed) return fallback;
+
+  // Strict local relative path check: starts with single '/', no protocol relative '//' or '\\'
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//') && !trimmed.startsWith('/\\')) {
+    return trimmed;
+  }
+
+  // If absolute URL provided, verify exact origin against NEXT_PUBLIC_SITE_URL
+  try {
+    const parsed = new URL(trimmed);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (siteUrl) {
+      const siteOrigin = new URL(siteUrl).origin;
+      if (parsed.origin === siteOrigin) {
+        return parsed.pathname + parsed.search + parsed.hash;
+      }
+    }
+  } catch {
+    // Malformed URL
+  }
+
+  return fallback;
+}
+

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { LoginSchema } from '@/validations/auth';
 import { rateLimit } from '@/lib/rate-limit';
+import { validateSafeRedirectUrl } from '@/lib/security';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
@@ -13,6 +14,7 @@ export type { ActionResult };
  * Authenticates operator with Supabase Auth using email/password.
  */
 export async function loginAction(rawInput: unknown, redirectTo: string = '/admin'): Promise<ActionResult> {
+  const safeRedirect = validateSafeRedirectUrl(redirectTo, '/admin');
   const rateLimitResult = rateLimit('login:action', { limit: 10, windowSeconds: 60 });
   if (!rateLimitResult.success) {
     return {
@@ -53,7 +55,7 @@ export async function loginAction(rawInput: unknown, redirectTo: string = '/admi
     };
   }
 
-  redirect(redirectTo);
+  redirect(safeRedirect);
 }
 
 /**

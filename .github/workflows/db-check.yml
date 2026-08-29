@@ -14,6 +14,9 @@ on:
       - 'src/db/migrations/**'
       - 'drizzle.config.ts'
 
+permissions:
+  contents: read
+
 jobs:
   db-check:
     name: Verify Drizzle Migrations Integrity
@@ -87,6 +90,38 @@ jobs:
             }
 
             console.log('✓ Journal integrity verified: ' + entries.length + ' entries, all idx contiguous, all SQL files present, no orphans.');
+          "
+
+      - name: Destructive Migration Static Guard
+        run: |
+          echo "=== Scanning for Destructive SQL Patterns ==="
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const migrationsDir = 'src/db/migrations';
+            const sqlFiles = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql'));
+            const destructivePatterns = [
+              { regex: /\bDROP\s+TABLE\b/i, name: 'DROP TABLE' },
+              { regex: /\bDROP\s+COLUMN\b/i, name: 'DROP COLUMN' },
+              { regex: /\bTRUNCATE\b/i, name: 'TRUNCATE' }
+            ];
+
+            let warnings = [];
+            for (const file of sqlFiles) {
+              const content = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+              for (const pattern of destructivePatterns) {
+                if (pattern.regex.test(content)) {
+                  warnings.push('Advisory: Destructive statement [' + pattern.name + '] detected in ' + file);
+                }
+              }
+            }
+
+            if (warnings.length > 0) {
+              console.warn('⚠️ Destructive SQL Guard Audit Report:');
+              warnings.forEach(w => console.warn('  - ' + w));
+            } else {
+              console.log('✓ Zero unreviewed destructive SQL statements detected in migrations.');
+            }
           "
 
       - name: Verify Schema Generation (No Drift)

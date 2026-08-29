@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { applySecurityHeaders } from '@/lib/security';
+import { applySecurityHeaders, validateSafeRedirectUrl } from '@/lib/security';
 import { rateLimit } from '@/lib/rate-limit';
 
 /**
@@ -77,9 +77,10 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect authenticated users away from /login to target or /os
   if (isAuthRoute && user) {
-    const redirectTarget = request.nextUrl.searchParams.get('redirect') || '/os';
+    const rawTarget = request.nextUrl.searchParams.get('redirect');
+    const safeTarget = validateSafeRedirectUrl(rawTarget, '/os');
     const url = request.nextUrl.clone();
-    url.pathname = redirectTarget.startsWith('/') ? redirectTarget : '/os';
+    url.pathname = safeTarget;
     url.searchParams.delete('redirect');
     const redirectRes = NextResponse.redirect(url);
     applySecurityHeaders(redirectRes.headers);

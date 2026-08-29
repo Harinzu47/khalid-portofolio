@@ -10,6 +10,9 @@ on:
       - 'package-lock.json'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   audit:
     name: NPM Audit & License Check
@@ -32,35 +35,39 @@ jobs:
       - name: Run NPM Audit (High & Critical)
         run: npm audit --audit-level=high
 
-      - name: License Compliance Check (Production Dependencies)
+      - name: License Compliance Check (ALLOW / REVIEW / DENY Policy)
         run: |
           npx -y license-checker --production --excludePrivatePackages --json > license-report.json
-          echo "=== License Compliance Check ==="
-          # Check for copyleft licenses in production dependencies only
-          # AGPL and GPL-3.0 are flagged because they may impose distribution obligations
-          # on the application itself. LGPL, MIT, BSD, ISC, Apache-2.0 are permitted.
+          echo "=== License Compliance Check (Production Dependencies) ==="
           node -e "
             const report = JSON.parse(require('fs').readFileSync('license-report.json', 'utf8'));
-            const blocked = ['AGPL-1.0-only', 'AGPL-1.0-or-later', 'AGPL-3.0-only', 'AGPL-3.0-or-later'];
-            const flagged = [];
+            const DENY_PATTERNS = [/\bAGPL\b/i, /\bGPL-1/i, /\bGPL-2/i, /\bGPL-3/i];
+            const REVIEW_PATTERNS = [/\bLGPL\b/i, /\bMPL\b/i, /\bEPL\b/i];
+            const denied = [];
+            const review = [];
 
             for (const [pkg, info] of Object.entries(report)) {
-              const licenses = String(info.licenses || '');
-              for (const b of blocked) {
-                if (licenses.includes(b)) {
-                  flagged.push(pkg + ': ' + licenses);
-                }
+              const lic = String(info.licenses || '');
+              if (DENY_PATTERNS.some(p => p.test(lic))) {
+                denied.push(pkg + ' (' + lic + ')');
+              } else if (REVIEW_PATTERNS.some(p => p.test(lic))) {
+                review.push(pkg + ' (' + lic + ')');
               }
             }
 
-            if (flagged.length > 0) {
-              console.error('Blocked licenses found in production dependencies:');
-              flagged.forEach(f => console.error('  - ' + f));
+            if (review.length > 0) {
+              console.log('ℹ️ Dependencies requiring periodic review:');
+              review.forEach(r => console.log('  - ' + r));
+            }
+
+            if (denied.length > 0) {
+              console.error('❌ DENIED copyleft licenses found in production dependencies:');
+              denied.forEach(d => console.error('  - ' + d));
               process.exit(1);
             }
 
             const count = Object.keys(report).length;
-            console.log('✓ License check passed: ' + count + ' production dependencies scanned, no blocked licenses found.');
+            console.log('✓ License check passed: ' + count + ' production dependencies scanned, 0 DENIED licenses.');
           "
 
       - name: Upload License Report

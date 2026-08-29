@@ -39,6 +39,29 @@ function getMinLevel(): LogLevel {
   return 'debug';
 }
 
+const SENSITIVE_KEY_REGEX = /password|token|authorization|cookie|secret|servicerole|databaseurl|apikey|credential|bearer/i;
+
+/**
+ * Recursively sanitizes metadata to prevent inadvertent credential leaks in log streams.
+ */
+export function sanitizeMeta(meta: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(meta)) {
+    if (SENSITIVE_KEY_REGEX.test(key)) {
+      sanitized[key] = '[REDACTED]';
+    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      sanitized[key] = sanitizeMeta(value as Record<string, unknown>);
+    } else if (Array.isArray(value)) {
+      sanitized[key] = value.map((item) =>
+        item && typeof item === 'object' ? sanitizeMeta(item as Record<string, unknown>) : item
+      );
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 /**
  * Emits a structured log entry to the appropriate console method.
  * This is the single integration point for external log providers.
@@ -49,7 +72,12 @@ function emit(entry: LogEntry): void {
     return;
   }
 
-  const output = JSON.stringify(entry);
+  const safeEntry = {
+    ...entry,
+    ...(entry.meta && { meta: sanitizeMeta(entry.meta) }),
+  };
+
+  const output = JSON.stringify(safeEntry);
 
   switch (entry.level) {
     case 'error':
