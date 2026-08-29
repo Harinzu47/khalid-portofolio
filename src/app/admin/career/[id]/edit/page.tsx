@@ -1,3 +1,4 @@
+import { requireOwnerSession } from '@/lib/auth';
 import { CareerService } from '@/services/career.service';
 import { CareerForm } from '../../CareerForm';
 import { notFound } from 'next/navigation';
@@ -8,15 +9,16 @@ export default async function EditCareerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await requireOwnerSession(`/admin/career/${id}/edit`);
 
   let exp;
   try {
-    exp = await CareerService.getAdminCareerExperienceById(id);
+    exp = await CareerService.getAdminCareerExperienceById(session.userId, id);
   } catch {
     notFound();
   }
 
-  const organizations = await CareerService.getOrganizations();
+  const organizations = await CareerService.getOrganizations(session.userId);
 
   const initialData = {
     organizationId: exp.organizationId,

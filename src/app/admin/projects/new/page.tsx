@@ -1,8 +1,13 @@
-import { ProjectsService } from '@/services/projects.service';
+import { requireOwnerSession } from '@/lib/auth';
+import { TaxonomyService } from '@/services/taxonomy.service';
 import { ProjectForm } from '../ProjectForm';
 
 export default async function NewProjectPage() {
-  const taxonomy = await ProjectsService.getTaxonomyOptions();
+  const session = await requireOwnerSession('/admin/projects/new');
+  const [technologies, skills] = await Promise.all([
+    TaxonomyService.getTechnologies(session.userId),
+    TaxonomyService.getSkills(session.userId),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -17,8 +22,8 @@ export default async function NewProjectPage() {
 
       <ProjectForm
         mode="create"
-        technologies={taxonomy.technologies}
-        skills={taxonomy.skills}
+        technologies={technologies}
+        skills={skills}
       />
     </div>
   );

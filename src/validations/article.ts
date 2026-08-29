@@ -9,15 +9,22 @@ export const ArticleFormSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens')
     .optional()
     .or(z.literal('')),
-  excerpt: z.string().max(500).optional(),
+  subtitle: z.string().max(255).optional().nullable(),
+  excerpt: z.string().max(500).optional().nullable(),
   content: z.string().min(10, 'Article content must be at least 10 characters long'),
-  status: z.enum(['draft', 'review', 'published', 'archived']).default('draft'),
+  readingTimeMinutes: z.number().int().positive().optional().nullable(),
   featured: z.boolean().default(false),
-  published: z.boolean().default(false),
-  seoTitle: z.string().max(255).optional(),
-  seoDescription: z.string().max(500).optional(),
+  visibility: z.enum(['private', 'unlisted', 'public']).default('private'),
+  seoTitle: z.string().max(255).optional().nullable(),
+  seoDescription: z.string().max(500).optional().nullable(),
+  ogImageId: z.string().uuid().optional().nullable(),
+  domainIds: z.array(z.string().uuid()).default([]),
+  skillIds: z.array(z.string().uuid()).default([]),
+  technologyIds: z.array(z.string().uuid()).default([]),
+  tagIds: z.array(z.string().uuid()).default([]),
   tagNames: z.array(z.string().min(1)).default([]),
   projectIds: z.array(z.string().uuid()).default([]),
 });
 
-export type ArticleFormInput = z.infer<typeof ArticleFormSchema>;
+export type ArticleFormInput = z.input<typeof ArticleFormSchema>;
+export type ArticleFormParsed = z.infer<typeof ArticleFormSchema>;

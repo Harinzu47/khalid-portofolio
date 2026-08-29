@@ -2,10 +2,13 @@
 
 import React, { useState, useTransition, useRef } from 'react';
 import { uploadMediaAction } from '@/actions/media';
-import { UploadCloud, Loader2 } from 'lucide-react';
-import { Alert } from '@/components/ui/Alert';
+import { UploadCloud, Loader2, AlertCircle } from 'lucide-react';
 
-export function MediaUploader() {
+interface MediaUploaderProps {
+  onUploadSuccess?: () => void;
+}
+
+export function MediaUploader({ onUploadSuccess }: MediaUploaderProps) {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -14,9 +17,15 @@ export function MediaUploader() {
   const handleFileUpload = (file: File) => {
     setErrorMessage(null);
 
+    // Client preliminary checks against centralized rules
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMessage('File size exceeds the maximum limit of 25 MB.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('altText', file.name.split('.')[0] || '');
+    formData.append('visibility', 'private'); // Private by default (Amendment 5)
 
     startTransition(async () => {
       const result = await uploadMediaAction(formData);
@@ -25,6 +34,9 @@ export function MediaUploader() {
       } else {
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
+        }
+        if (onUploadSuccess) {
+          onUploadSuccess();
         }
       }
     });
@@ -47,11 +59,12 @@ export function MediaUploader() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 font-mono text-xs">
       {errorMessage && (
-        <Alert variant="destructive" title="Upload Failed">
-          {errorMessage}
-        </Alert>
+        <div className="p-3.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 flex items-start space-x-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
       )}
 
       <div
@@ -62,25 +75,25 @@ export function MediaUploader() {
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`p-8 border-2 border-dashed rounded-lg text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${
+        className={`p-6 sm:p-8 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all flex flex-col items-center justify-center space-y-3 ${
           isDragging
-            ? 'border-terminal-primary bg-terminal-primary/10'
-            : 'border-terminal-border bg-terminal-surface hover:border-terminal-secondary/60 hover:bg-terminal-surface-alt/40'
+            ? 'border-terminal-primary bg-terminal-primary/10 scale-[0.99]'
+            : 'border-terminal-border bg-terminal-surface hover:border-terminal-primary/50 hover:bg-terminal-surface-hover'
         }`}
       >
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,.svg,.pdf"
+          accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
           onChange={handleFileChange}
           className="hidden"
           disabled={isPending}
         />
 
         {isPending ? (
-          <div className="flex flex-col items-center space-y-2 font-mono text-xs text-terminal-primary">
+          <div className="flex flex-col items-center space-y-2 text-terminal-primary">
             <Loader2 className="w-8 h-8 animate-spin" />
-            <span>Uploading asset to Supabase Storage...</span>
+            <span className="font-semibold">Uploading asset & syncing metadata...</span>
           </div>
         ) : (
           <>
@@ -88,11 +101,11 @@ export function MediaUploader() {
               <UploadCloud className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <p className="font-mono text-xs font-semibold text-terminal-text-primary">
+              <p className="font-semibold text-terminal-text-primary text-xs sm:text-sm">
                 Click or drag & drop files here to upload
               </p>
-              <p className="font-mono text-[11px] text-terminal-text-muted">
-                Supports PNG, JPEG, WebP, SVG, PDF up to 10MB
+              <p className="text-[11px] text-terminal-text-muted">
+                Supported formats: JPEG, PNG, WebP, GIF, PDF (Images up to 10MB, Documents up to 25MB)
               </p>
             </div>
           </>

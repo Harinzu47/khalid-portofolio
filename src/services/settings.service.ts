@@ -20,6 +20,7 @@ export class SettingsService {
       const [newProfile] = await db
         .insert(profiles)
         .values({
+          ownerId: '6ccf61c3-a1b6-4cf2-9c91-81a1ce4f35a0',
           fullName: 'Khalid Jundullah',
           username: 'khalid',
           headline: 'Network & Cloud Infrastructure Engineer → Fullstack Developer',

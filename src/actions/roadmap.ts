@@ -1,110 +1,40 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
-import { LearningGoalFormSchema, RoadmapItemFormSchema } from '@/validations/roadmap';
-import { RoadmapService } from '@/services/roadmap.service';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import type { ActionResult } from './auth';
+import { requireOwnerSession } from '@/lib/auth';
+import { RoadmapService } from '@/services/roadmap.service';
+import { LegacyLearningGoalsService } from '@/services/legacy-learning-goals.service';
+import {
+  RoadmapItemFormSchema,
+  RoadmapReorderSchema,
+  LearningGoalFormSchema,
+  type RoadmapItemFormInput,
+  type RoadmapReorderInput,
+  type LearningGoalFormInput,
+} from '@/validations/roadmap';
+import type { ActionResult, RoadmapEditorDTO } from '@/types/dtos';
 
-// ==============================================================================
-// 1. LEARNING GOALS ACTIONS
-// ==============================================================================
+export async function createRoadmapItemAction(
+  input: RoadmapItemFormInput
+): Promise<ActionResult<RoadmapEditorDTO>> {
+  const session = await requireOwnerSession();
 
-export async function createLearningGoalAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/learning-goals/new');
-
-  const parsed = LearningGoalFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
+  const validated = RoadmapItemFormSchema.safeParse(input);
+  if (!validated.success) {
     return {
       success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      error: validated.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: validated.error.flatten().fieldErrors,
     };
   }
 
   try {
-    const goal = await RoadmapService.createLearningGoal(parsed.data, session.userId);
-    revalidatePath('/admin/learning-goals');
+    const data = await RoadmapService.createRoadmapItem(session.userId, validated.data, session.userId);
     revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     revalidatePath('/');
-    redirect(`/admin/learning-goals?created=${encodeURIComponent(goal.title)}`);
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to create learning goal.',
-    };
-  }
-}
-
-export async function updateLearningGoalAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/learning-goals/${id}/edit`);
-
-  const parsed = LearningGoalFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    await RoadmapService.updateLearningGoal(id, parsed.data, session.userId);
-    revalidatePath('/admin/learning-goals');
-    revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
-    revalidatePath('/');
-    redirect('/admin/learning-goals?updated=true');
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to update learning goal.',
-    };
-  }
-}
-
-export async function deleteLearningGoalAction(id: string): Promise<ActionResult> {
-  const session = await requireAuth('/admin/learning-goals');
-
-  try {
-    await RoadmapService.deleteLearningGoal(id, session.userId);
-    revalidatePath('/admin/learning-goals');
-    revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
-    revalidatePath('/');
-    return { success: true };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete learning goal.',
-    };
-  }
-}
-
-// ==============================================================================
-// 2. ROADMAP ITEMS ACTIONS
-// ==============================================================================
-
-export async function createRoadmapItemAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/roadmap/new');
-
-  const parsed = RoadmapItemFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-  }
-
-  try {
-    const item = await RoadmapService.createRoadmapItem(parsed.data, session.userId);
-    revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
-    revalidatePath('/');
-    redirect(`/admin/roadmap?created=${encodeURIComponent(item.title)}`);
+    return { success: true, data };
   } catch (err) {
     return {
       success: false,
@@ -113,24 +43,29 @@ export async function createRoadmapItemAction(rawInput: unknown): Promise<Action
   }
 }
 
-export async function updateRoadmapItemAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/roadmap/${id}/edit`);
+export async function updateRoadmapItemAction(
+  id: string,
+  input: Partial<RoadmapItemFormInput>
+): Promise<ActionResult<RoadmapEditorDTO>> {
+  const session = await requireOwnerSession();
 
-  const parsed = RoadmapItemFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
+  const validated = RoadmapItemFormSchema.partial().safeParse(input);
+  if (!validated.success) {
     return {
       success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      error: validated.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: validated.error.flatten().fieldErrors,
     };
   }
 
   try {
-    await RoadmapService.updateRoadmapItem(id, parsed.data, session.userId);
+    const data = await RoadmapService.updateRoadmapItem(session.userId, id, validated.data, session.userId);
     revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
+    revalidatePath(`/admin/roadmap/${id}/edit`);
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     revalidatePath('/');
-    redirect('/admin/roadmap?updated=true');
+    return { success: true, data };
   } catch (err) {
     return {
       success: false,
@@ -139,19 +74,128 @@ export async function updateRoadmapItemAction(id: string, rawInput: unknown): Pr
   }
 }
 
-export async function deleteRoadmapItemAction(id: string): Promise<ActionResult> {
-  const session = await requireAuth('/admin/roadmap');
+export async function reorderRoadmapItemsAction(
+  items: RoadmapReorderInput
+): Promise<ActionResult<void>> {
+  const session = await requireOwnerSession();
+
+  const validated = RoadmapReorderSchema.safeParse(items);
+  if (!validated.success) {
+    return {
+      success: false,
+      error: validated.error.issues[0]?.message || 'Invalid reorder payload.',
+    };
+  }
 
   try {
-    await RoadmapService.deleteRoadmapItem(id, session.userId);
+    await RoadmapService.reorderRoadmapItems(session.userId, validated.data, session.userId);
     revalidatePath('/admin/roadmap');
-    revalidatePath('/roadmap');
-    revalidatePath('/');
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete roadmap item.',
+      error: err instanceof Error ? err.message : 'Failed to reorder roadmap items.',
+    };
+  }
+}
+
+export async function archiveRoadmapItemAction(
+  id: string
+): Promise<ActionResult<void>> {
+  const session = await requireOwnerSession();
+
+  try {
+    await RoadmapService.archiveRoadmapItem(session.userId, id, session.userId);
+    revalidatePath('/admin/roadmap');
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to archive roadmap item.',
+    };
+  }
+}
+
+/**
+ * @deprecated Use archiveRoadmapItemAction instead.
+ */
+export async function deleteRoadmapItemAction(
+  id: string
+): Promise<ActionResult<void>> {
+  return archiveRoadmapItemAction(id);
+}
+
+// ----------------------------------------------------
+// Isolated Legacy Learning Goals Actions (Amendment 1)
+// ----------------------------------------------------
+
+export async function createLearningGoalAction(rawInput: unknown): Promise<ActionResult> {
+  const session = await requireOwnerSession();
+
+  const parsed = LearningGoalFormSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const goal = await LegacyLearningGoalsService.createLearningGoal(parsed.data, session.userId, session.userId);
+    revalidatePath('/admin/learning-goals');
+    revalidatePath('/admin');
+    return { success: true, data: goal };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to create learning goal.',
+    };
+  }
+}
+
+export async function updateLearningGoalAction(id: string, rawInput: unknown): Promise<ActionResult> {
+  const session = await requireOwnerSession();
+
+  const parsed = LearningGoalFormSchema.partial().safeParse(rawInput);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    const goal = await LegacyLearningGoalsService.updateLearningGoal(id, parsed.data, session.userId, session.userId);
+    revalidatePath('/admin/learning-goals');
+    revalidatePath(`/admin/learning-goals/${id}/edit`);
+    revalidatePath('/admin');
+    return { success: true, data: goal };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to update learning goal.',
+    };
+  }
+}
+
+export async function deleteLearningGoalAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
+
+  try {
+    await LegacyLearningGoalsService.deleteLearningGoal(id, session.userId, session.userId);
+    revalidatePath('/admin/learning-goals');
+    revalidatePath('/admin');
+    return { success: true };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Failed to delete learning goal.',
     };
   }
 }

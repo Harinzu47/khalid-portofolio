@@ -25,7 +25,7 @@ export interface ProjectFormProps {
     solution?: string | null;
     architecture?: string | null;
     role?: string | null;
-    status?: 'idea' | 'planning' | 'active' | 'completed' | 'archived';
+    status?: ProjectFormInput['status'];
     startDate?: string | null;
     endDate?: string | null;
     repositoryUrl?: string | null;
@@ -61,7 +61,7 @@ export function ProjectForm({
   const [solution, setSolution] = useState(initialData?.solution || '');
   const [architecture, setArchitecture] = useState(initialData?.architecture || '');
   const [role, setRole] = useState(initialData?.role || '');
-  const [status, setStatus] = useState(initialData?.status || 'planning');
+  const [status, setStatus] = useState<ProjectFormInput['status']>(initialData?.status || 'planning');
   const [startDate, setStartDate] = useState(initialData?.startDate || '');
   const [endDate, setEndDate] = useState(initialData?.endDate || '');
   const [repositoryUrl, setRepositoryUrl] = useState(initialData?.repositoryUrl || '');

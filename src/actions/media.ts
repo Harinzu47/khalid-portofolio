@@ -1,81 +1,184 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
+import { requireOwnerSession } from '@/lib/auth';
 import { MediaService } from '@/services/media.service';
-import { StorageService } from '@/lib/supabase/storage';
-import { ALLOWED_MIME_TYPES, MAX_FILE_SIZE_BYTES } from '@/validations/media';
+import {
+  UpdateMediaMetadataSchema,
+  ReorderProjectMediaSchema,
+  type UpdateMediaMetadataInput,
+  type ReorderProjectMediaInput,
+} from '@/validations/media';
 import { revalidatePath } from 'next/cache';
-import type { ActionResult } from './auth';
+import { actionOk, actionErr, type ActionResult } from '@/lib/action-result';
+import type {
+  MediaEditorDTO,
+  MediaUsageDTO,
+  MediaHealthSummaryDTO,
+} from '@/types/dtos/media.dto';
 
-export async function uploadMediaAction(formData: FormData): Promise<ActionResult> {
-  const session = await requireAuth('/admin/media');
-
+/**
+ * Uploads a new media asset using compensating workflow (Amendments 9, 12, 15, 18, 21, 22).
+ */
+export async function uploadMediaAction(formData: FormData): Promise<ActionResult<MediaEditorDTO>> {
+  const session = await requireOwnerSession();
   const file = formData.get('file') as File | null;
-  const altText = (formData.get('altText') as string) || '';
+  const altText = (formData.get('altText') as string) || null;
+  const caption = (formData.get('caption') as string) || null;
+  const visibility = (formData.get('visibility') as 'private' | 'unlisted' | 'public') || 'private';
 
   if (!file || file.size === 0) {
-    return { success: false, error: 'No file provided.' };
-  }
-
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return {
-      success: false,
-      error: `File size exceeds the maximum limit of ${MAX_FILE_SIZE_BYTES / (1024 * 1024)}MB.`,
-    };
-  }
-
-  if (!ALLOWED_MIME_TYPES.includes(file.type as (typeof ALLOWED_MIME_TYPES)[number])) {
-    return {
-      success: false,
-      error: `Unsupported file format: ${file.type}. Allowed types: images, SVGs, WebP, PDFs.`,
-    };
+    return actionErr('No file provided for upload.', 'VALIDATION_ERROR');
   }
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const timestamp = Date.now();
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const storagePath = `uploads/${timestamp}-${sanitizedName}`;
 
-    // Upload to Supabase Storage
-    await StorageService.upload({
-      path: storagePath,
-      file: buffer,
-      contentType: file.type,
-    });
-
-    const newMedia = await MediaService.registerMedia(
+    const result = await MediaService.uploadMedia(
+      session.userId,
       {
+        file: buffer,
         originalName: file.name,
-        path: storagePath,
         mimeType: file.type,
         sizeBytes: file.size,
-        altText: altText || null,
+        altText,
+        caption,
+        visibility,
       },
       session.userId
     );
 
     revalidatePath('/admin/media');
-    return { success: true, data: newMedia };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to upload media asset.',
-    };
+    return actionOk(result);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to upload media asset.', 'INTERNAL_ERROR');
   }
 }
 
-export async function deleteMediaAction(id: string): Promise<ActionResult> {
-  const session = await requireAuth('/admin/media');
+/**
+ * Updates metadata (altText, caption, visibility) without re-uploading file.
+ */
+export async function updateMediaMetadataAction(
+  rawInput: unknown
+): Promise<ActionResult<MediaEditorDTO>> {
+  const session = await requireOwnerSession();
+  const parsed = UpdateMediaMetadataSchema.safeParse(rawInput);
+
+  if (!parsed.success) {
+    return actionErr(parsed.error.issues[0]?.message || 'Invalid metadata input.', 'VALIDATION_ERROR');
+  }
 
   try {
-    await MediaService.deleteMedia(id, session.userId);
+    const result = await MediaService.updateMediaMetadata(
+      session.userId,
+      parsed.data,
+      session.userId
+    );
+
     revalidatePath('/admin/media');
-    return { success: true };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete media asset.',
-    };
+    return actionOk(result);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to update media metadata.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Soft archives a media asset with published reference protection (Amendments 28, 57).
+ */
+export async function archiveMediaAction(id: string): Promise<ActionResult<MediaEditorDTO>> {
+  const session = await requireOwnerSession();
+
+  try {
+    const result = await MediaService.archiveMedia(session.userId, id, session.userId);
+    revalidatePath('/admin/media');
+    return actionOk(result);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to archive media asset.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Restores an archived media asset.
+ */
+export async function restoreMediaAction(id: string): Promise<ActionResult<MediaEditorDTO>> {
+  const session = await requireOwnerSession();
+
+  try {
+    const result = await MediaService.restoreMedia(session.userId, id, session.userId);
+    revalidatePath('/admin/media');
+    return actionOk(result);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to restore media asset.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Permanently deletes an archived, unreferenced media asset (Amendments 30, 31).
+ */
+export async function deleteMediaPermanentlyAction(id: string): Promise<ActionResult<void>> {
+  const session = await requireOwnerSession();
+
+  try {
+    await MediaService.deleteMediaPermanently(session.userId, id, session.userId);
+    revalidatePath('/admin/media');
+    return actionOk(undefined);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to delete media asset permanently.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Retrieves detailed structural usage references for an asset.
+ */
+export async function getMediaUsageAction(id: string): Promise<ActionResult<MediaUsageDTO>> {
+  const session = await requireOwnerSession();
+
+  try {
+    const usage = await MediaService.getMediaUsage(session.userId, id);
+    return actionOk(usage);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to retrieve media usage.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Runs bounded on-demand health diagnostics for the owner's media library (Amendments 41, 42).
+ */
+export async function getMediaHealthDiagnosticsAction(): Promise<
+  ActionResult<MediaHealthSummaryDTO>
+> {
+  const session = await requireOwnerSession();
+
+  try {
+    const diagnostics = await MediaService.getMediaHealthDiagnostics(session.userId);
+    return actionOk(diagnostics);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to retrieve media health diagnostics.', 'INTERNAL_ERROR');
+  }
+}
+
+/**
+ * Reorders project gallery attachments transactionally (Amendment 25).
+ */
+export async function reorderProjectMediaAction(rawInput: unknown): Promise<ActionResult<void>> {
+  const session = await requireOwnerSession();
+  const parsed = ReorderProjectMediaSchema.safeParse(rawInput);
+
+  if (!parsed.success) {
+    return actionErr(parsed.error.issues[0]?.message || 'Invalid reorder input.', 'VALIDATION_ERROR');
+  }
+
+  try {
+    await MediaService.reorderProjectMedia(
+      session.userId,
+      parsed.data.projectId,
+      parsed.data.mediaIds,
+      parsed.data.coverMediaId,
+      session.userId
+    );
+    revalidatePath('/admin/projects');
+    revalidatePath(`/admin/projects/${parsed.data.projectId}/edit`);
+    return actionOk(undefined);
+  } catch (err: any) {
+    return actionErr(err.message || 'Failed to reorder project media.', 'INTERNAL_ERROR');
   }
 }

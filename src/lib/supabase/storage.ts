@@ -91,4 +91,46 @@ export class StorageService {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   }
+
+  /**
+   * Deletes a file object from Supabase Storage (Amendment 21, 31).
+   * Used for compensating cleanup on failed database insert and maintenance workflows.
+   */
+  static async deleteObject(
+    path: string,
+    bucket: StorageBucket = STORAGE_BUCKETS.PORTFOLIO
+  ): Promise<Result<void, Error>> {
+    try {
+      const supabase = await createClient();
+      const { error } = await supabase.storage.from(bucket).remove([path]);
+      if (error) {
+        return err(new Error(`Supabase storage delete failed: ${error.message}`));
+      }
+      return ok(undefined);
+    } catch (error) {
+      return err(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  /**
+   * Checks if an object exists in storage (for bounded diagnostics, Amendment 40, 42).
+   */
+  static async objectExists(
+    path: string,
+    bucket: StorageBucket = STORAGE_BUCKETS.PORTFOLIO
+  ): Promise<boolean> {
+    try {
+      const supabase = await createClient();
+      const folder = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : '';
+      const filename = path.includes('/') ? path.substring(path.lastIndexOf('/') + 1) : path;
+      const { data, error } = await supabase.storage.from(bucket).list(folder, {
+        search: filename,
+        limit: 1,
+      });
+      if (error || !data) return false;
+      return data.some((item) => item.name === filename);
+    } catch {
+      return false;
+    }
+  }
 }

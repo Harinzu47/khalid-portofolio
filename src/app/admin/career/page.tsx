@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { requireOwnerSession } from '@/lib/auth';
 import { CareerService } from '@/services/career.service';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
@@ -6,7 +7,8 @@ import { DeleteCareerButton } from './DeleteCareerButton';
 import { Plus, Edit, Briefcase, Building2, MapPin } from 'lucide-react';
 
 export default async function AdminCareerPage() {
-  const result = await CareerService.getAdminCareerExperiences({ page: 1, pageSize: 50 });
+  const session = await requireOwnerSession('/admin/career');
+  const result = await CareerService.getAdminCareerExperiences(session.userId, { page: 1, pageSize: 50 });
   const careerList = result.data;
 
   return (

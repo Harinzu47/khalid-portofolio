@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { requireOwnerSession } from '@/lib/auth';
 import { ProjectsService } from '@/services/projects.service';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
@@ -6,7 +7,8 @@ import { DeleteProjectButton } from './DeleteProjectButton';
 import { Plus, Edit, ExternalLink, FolderGit2 } from 'lucide-react';
 
 export default async function AdminProjectsPage() {
-  const result = await ProjectsService.getAdminProjects({ page: 1, pageSize: 50 });
+  const session = await requireOwnerSession('/admin/projects');
+  const result = await ProjectsService.getAdminProjects(session.userId, { page: 1, pageSize: 50 });
   const projectsList = result.data;
 
   return (
@@ -89,7 +91,7 @@ export default async function AdminProjectsPage() {
                 </TableCell>
 
                 <TableCell>
-                  {project.publishedAt ? (
+                  {project.publicationStatus === 'published' ? (
                     <span className="text-[11px] text-terminal-primary font-mono">
                       ● Published
                     </span>
@@ -102,12 +104,12 @@ export default async function AdminProjectsPage() {
 
                 <TableCell>
                   <div className="flex flex-wrap gap-1 max-w-xs">
-                    {project.technologies.slice(0, 3).map((pt) => (
+                    {project.technologies.slice(0, 3).map((t) => (
                       <span
-                        key={pt.technology.id}
+                        key={t.id}
                         className="text-[10px] px-1.5 py-0.5 rounded bg-terminal-surface border border-terminal-border text-terminal-text-muted"
                       >
-                        {pt.technology.name}
+                        {t.name}
                       </span>
                     ))}
                     {project.technologies.length > 3 && (
@@ -119,12 +121,12 @@ export default async function AdminProjectsPage() {
                 </TableCell>
 
                 <TableCell className="text-terminal-text-muted text-[11px]">
-                  {project.updatedAt.toLocaleDateString()}
+                  {new Date(project.updatedAt).toLocaleDateString()}
                 </TableCell>
 
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end space-x-1.5">
-                    {project.publishedAt && (
+                    {project.publicationStatus === 'published' && (
                       <Link
                         href={`/projects/${project.slug}`}
                         target="_blank"

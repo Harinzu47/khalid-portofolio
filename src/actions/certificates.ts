@@ -1,30 +1,35 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
-import { CertificateFormSchema } from '@/validations/certificate';
-import { CertificatesService } from '@/services/certificates.service';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import type { ActionResult } from './auth';
+import { requireOwnerSession } from '@/lib/auth';
+import { CertificatesService } from '@/services/certificates.service';
+import {
+  CertificateFormSchema,
+  type CertificateFormInput,
+} from '@/validations/certificate';
+import type { ActionResult, CertificateEditorDTO } from '@/types/dtos';
 
-export async function createCertificateAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/certificates/new');
+export async function createCertificateAction(
+  input: CertificateFormInput
+): Promise<ActionResult<CertificateEditorDTO>> {
+  const session = await requireOwnerSession();
 
-  const parsed = CertificateFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
+  const validated = CertificateFormSchema.safeParse(input);
+  if (!validated.success) {
     return {
       success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      error: validated.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: validated.error.flatten().fieldErrors,
     };
   }
 
   try {
-    const cert = await CertificatesService.createCertificate(parsed.data, session.userId);
+    const data = await CertificatesService.createCertificate(session.userId, validated.data, session.userId);
     revalidatePath('/admin/certificates');
-    revalidatePath('/certificates');
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     revalidatePath('/');
-    redirect(`/admin/certificates?created=${encodeURIComponent(cert.name)}`);
+    return { success: true, data };
   } catch (err) {
     return {
       success: false,
@@ -33,24 +38,29 @@ export async function createCertificateAction(rawInput: unknown): Promise<Action
   }
 }
 
-export async function updateCertificateAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/certificates/${id}/edit`);
+export async function updateCertificateAction(
+  id: string,
+  input: Partial<CertificateFormInput>
+): Promise<ActionResult<CertificateEditorDTO>> {
+  const session = await requireOwnerSession();
 
-  const parsed = CertificateFormSchema.safeParse(rawInput);
-  if (!parsed.success) {
+  const validated = CertificateFormSchema.partial().safeParse(input);
+  if (!validated.success) {
     return {
       success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
+      error: validated.error.issues[0]?.message || 'Invalid input.',
+      fieldErrors: validated.error.flatten().fieldErrors,
     };
   }
 
   try {
-    await CertificatesService.updateCertificate(id, parsed.data, session.userId);
+    const data = await CertificatesService.updateCertificate(session.userId, id, validated.data, session.userId);
     revalidatePath('/admin/certificates');
-    revalidatePath('/certificates');
+    revalidatePath(`/admin/certificates/${id}/edit`);
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     revalidatePath('/');
-    redirect('/admin/certificates?updated=true');
+    return { success: true, data };
   } catch (err) {
     return {
       success: false,
@@ -59,19 +69,30 @@ export async function updateCertificateAction(id: string, rawInput: unknown): Pr
   }
 }
 
-export async function deleteCertificateAction(id: string): Promise<ActionResult> {
-  const session = await requireAuth('/admin/certificates');
+export async function archiveCertificateAction(
+  id: string
+): Promise<ActionResult<void>> {
+  const session = await requireOwnerSession();
 
   try {
-    await CertificatesService.deleteCertificate(id, session.userId);
+    await CertificatesService.archiveCertificate(session.userId, id, session.userId);
     revalidatePath('/admin/certificates');
-    revalidatePath('/certificates');
-    revalidatePath('/');
+    revalidatePath('/admin/learning');
+    revalidatePath('/admin');
     return { success: true };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete certificate.',
+      error: err instanceof Error ? err.message : 'Failed to archive certificate.',
     };
   }
+}
+
+/**
+ * @deprecated Use archiveCertificateAction instead.
+ */
+export async function deleteCertificateAction(
+  id: string
+): Promise<ActionResult<void>> {
+  return archiveCertificateAction(id);
 }

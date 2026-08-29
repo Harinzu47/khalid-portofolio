@@ -19,8 +19,15 @@ import {
   Image as ImageIcon,
   Settings,
   Terminal,
-  ShieldCheck,
+  Scale,
+  Library,
   BarChart3,
+  ShieldCheck,
+  Compass,
+  GraduationCap,
+  Network,
+  Globe,
+  Search,
 } from 'lucide-react';
 
 export interface NavGroup {
@@ -37,6 +44,10 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: 'Overview',
     items: [
       { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+      { label: 'Publishing', href: '/admin/publishing', icon: Globe },
+      { label: 'Now Focus', href: '/admin/now', icon: Compass },
+      { label: 'Learning Hub', href: '/admin/learning', icon: GraduationCap },
+      { label: 'Knowledge Hub', href: '/admin/knowledge', icon: Library },
       { label: 'System Metrics', href: '/admin/metrics', icon: BarChart3 },
     ],
   },
@@ -47,28 +58,32 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { label: 'Articles', href: '/admin/articles', icon: FileText },
       { label: 'Journal Logs', href: '/admin/journal', icon: BookOpen },
       { label: 'Tech Notes', href: '/admin/notes', icon: StickyNote },
+      { label: 'ADRs', href: '/admin/adrs', icon: Scale },
+      { label: 'Relationships', href: '/admin/relationships', icon: Network },
+    ],
+  },
+  {
+    label: 'Learning & Growth',
+    items: [
+      { label: 'Learning Paths', href: '/admin/learning/paths', icon: BookOpen },
+      { label: 'Roadmap', href: '/admin/roadmap', icon: Map },
+      { label: 'Certificates', href: '/admin/certificates', icon: Award },
+      { label: 'Legacy Goals', href: '/admin/learning-goals', icon: Target },
     ],
   },
   {
     label: 'Career & Taxonomy',
     items: [
       { label: 'Career', href: '/admin/career', icon: Briefcase },
-      { label: 'Certificates', href: '/admin/certificates', icon: Award },
       { label: 'Skills', href: '/admin/skills', icon: Sparkles },
       { label: 'Technologies', href: '/admin/technologies', icon: Cpu },
-    ],
-  },
-  {
-    label: 'Planning & Growth',
-    items: [
-      { label: 'Roadmap', href: '/admin/roadmap', icon: Map },
-      { label: 'Learning Goals', href: '/admin/learning-goals', icon: Target },
     ],
   },
   {
     label: 'Media & Security',
     items: [
       { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
+      { label: 'Search Ops', href: '/admin/search', icon: Search },
       { label: 'Audit Trail', href: '/admin/audit-logs', icon: ShieldCheck },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],

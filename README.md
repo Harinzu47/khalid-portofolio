@@ -32,7 +32,7 @@ flowchart TD
     subgraph DatabaseLayer ["Data & Storage Plane"]
         Drizzle["Drizzle ORM Engine\n(Connection Pooling, Prepared Queries)"]
         Postgres[("PostgreSQL 16 Database\n(25 Relational Tables, RLS, B-Tree Composite Indexes)")]
-        SupabaseStorage[("Supabase Storage\n(portfolio-media Bucket)")]
+        SupabaseStorage[("Supabase Storage\n(portfolio Bucket)")]
     end
 
     Client --> Caddy

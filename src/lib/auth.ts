@@ -8,9 +8,12 @@ export interface AuthSession {
   email: string;
 }
 
+/** Canonical alias for single-owner session */
+export type OwnerSession = AuthSession;
+
 /**
  * Enforces authenticated operator session at the server boundary.
- * If unauthenticated, throws or redirects to `/login`.
+ * If unauthenticated, redirects to `/login`.
  */
 export async function requireAuth(redirectTo?: string): Promise<AuthSession> {
   const supabase = await createClient();
@@ -29,6 +32,15 @@ export async function requireAuth(redirectTo?: string): Promise<AuthSession> {
     userId: user.id,
     email: user.email || '',
   };
+}
+
+/**
+ * Canonical owner authorization helper for HZCODE Personal Developer OS.
+ * In v1, any valid authenticated session represents the single system owner.
+ * Explicit multi-role support (Admin/Editor/Reviewer) is deferred.
+ */
+export async function requireOwnerSession(redirectTo?: string): Promise<OwnerSession> {
+  return await requireAuth(redirectTo);
 }
 
 /**

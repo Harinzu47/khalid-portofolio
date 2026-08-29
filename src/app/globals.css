@@ -3,18 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --terminal-bg: #0d1117;
-  --terminal-surface: #161b22;
-  --terminal-surface-alt: #21262d;
-  --terminal-border: #30363d;
-  --terminal-primary: #7ee787;
-  --terminal-secondary: #79c0ff;
-  --terminal-accent: #f78166;
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-alt: #21262d;
+  --surface-code: #121212;
+  --border: #30363d;
+  --border-subtle: #21262d;
+  --accent: #7ee787;
+  --accent-secondary: #79c0ff;
+  --accent-warm: #f78166;
+  --accent-slate: #334155;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+
+  /* Backward compatibility aliases */
+  --terminal-bg: var(--bg);
+  --terminal-surface: var(--surface);
+  --terminal-surface-alt: var(--surface-alt);
+  --terminal-border: var(--border);
+  --terminal-primary: var(--accent);
+  --terminal-secondary: var(--accent-secondary);
+  --terminal-accent: var(--accent-warm);
   --terminal-purple: #d2a8ff;
   --terminal-warning: #f0883e;
-  --terminal-text-primary: #e6edf3;
-  --terminal-text-secondary: #8b949e;
-  --terminal-text-muted: #484f58;
+  --terminal-text-primary: var(--text-primary);
+  --terminal-text-secondary: var(--text-secondary);
+  --terminal-text-muted: var(--text-muted);
 }
 
 /* Matrix Theme */

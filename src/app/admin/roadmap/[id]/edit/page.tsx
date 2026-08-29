@@ -1,43 +1,29 @@
+import { requireOwnerSession } from '@/lib/auth';
 import { RoadmapService } from '@/services/roadmap.service';
 import { RoadmapForm } from '../../RoadmapForm';
-import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 
 export default async function EditRoadmapItemPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const session = await requireOwnerSession();
   const { id } = await params;
 
-  let item;
-  try {
-    item = await RoadmapService.getRoadmapItemById(id);
-  } catch {
-    notFound();
-  }
-
-  const initialData = {
-    title: item.title,
-    description: item.description,
-    category: item.category,
-    status: item.status as 'backlog' | 'planned' | 'in_progress' | 'completed',
-    priority: item.priority,
-    targetDate: item.targetDate,
-    sortOrder: item.sortOrder,
-  };
+  const item = await RoadmapService.getRoadmapEditorById(session.userId, id);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold font-mono text-terminal-text-primary">
-          Edit Roadmap Milestone
-        </h1>
-        <p className="text-xs font-mono text-terminal-text-secondary">
+        <h1 className="text-xl font-bold text-slate-100">Edit Roadmap Milestone</h1>
+        <p className="text-xs text-slate-400 mt-1">
           Update status, milestone deliverables, and target completion dates.
         </p>
       </div>
 
-      <RoadmapForm mode="edit" itemId={id} initialData={initialData} />
+      <RoadmapForm initialData={item} />
     </div>
   );
 }

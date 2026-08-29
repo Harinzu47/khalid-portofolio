@@ -1,4 +1,4 @@
-import { RoadmapService } from '@/services/roadmap.service';
+import { LegacyLearningGoalsService } from '@/services/legacy-learning-goals.service';
 import { LearningGoalForm } from '../../LearningGoalForm';
 import { notFound } from 'next/navigation';
 
@@ -11,7 +11,7 @@ export default async function EditLearningGoalPage({
 
   let goal;
   try {
-    goal = await RoadmapService.getLearningGoalById(id);
+    goal = await LegacyLearningGoalsService.getLearningGoalById(id);
   } catch {
     notFound();
   }

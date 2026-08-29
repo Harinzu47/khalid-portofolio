@@ -3,9 +3,16 @@ import {
   projects,
   projectTechnologies,
   projectSkills,
+  projectDomains,
+  projectTags,
   projectLinks,
   technologies,
   skills,
+  domains,
+  tags,
+  projectCaseStudies,
+  experienceProjects,
+  careerExperiences,
 } from '@/db/schema';
 import { eq, desc, and, isNull, sql } from 'drizzle-orm';
 import { slugify } from '@/lib/slug';
@@ -13,18 +20,41 @@ import { NotFoundError, ConflictError } from '@/lib/errors';
 import { AuditService } from './audit.service';
 import { getPaginationOffset, formatPaginatedResult, PaginationParams } from '@/lib/pagination';
 import type { ProjectFormInput } from '@/validations/project';
+import type {
+  ProjectListItemDTO,
+  ProjectEditorDTO,
+  PaginatedResultDTO,
+  EntityRefDTO,
+} from '@/types/dtos';
 
 export class ProjectsService {
   /**
+   * Helper query for admin selectors.
+   */
+  static async getProjectsSelector(ownerId: string): Promise<{ id: string; name: string; slug?: string }[]> {
+    const data = await db.query.projects.findMany({
+      where: and(
+        eq(projects.ownerId, ownerId),
+        isNull(projects.deletedAt),
+        isNull(projects.archivedAt)
+      ),
+      columns: { id: true, title: true, slug: true },
+      orderBy: [desc(projects.createdAt)],
+    });
+    return data.map((p) => ({ id: p.id, name: p.title, slug: p.slug }));
+  }
+
+  /**
    * Fetches public projects for the portfolio feed.
    */
-  static async getPublicProjects(params?: PaginationParams) {
+  static async getPublicProjects(params?: PaginationParams): Promise<PaginatedResultDTO<ProjectListItemDTO>> {
     const { page, pageSize, offset, limit } = getPaginationOffset(params, 12);
 
     const conditions = and(
-      eq(projects.status, 'completed'),
-      sql`${projects.publishedAt} IS NOT NULL`,
-      isNull(projects.deletedAt)
+      eq(projects.visibility, 'public'),
+      eq(projects.publicationStatus, 'published'),
+      isNull(projects.deletedAt),
+      isNull(projects.archivedAt)
     );
 
     const [data, countResult] = await Promise.all([
@@ -39,12 +69,11 @@ export class ProjectsService {
               technology: true,
             },
           },
-          skills: {
+          domains: {
             with: {
-              skill: true,
+              domain: true,
             },
           },
-          links: true,
         },
       }),
       db
@@ -54,54 +83,43 @@ export class ProjectsService {
     ]);
 
     const totalRecords = countResult[0]?.count || 0;
-    return formatPaginatedResult(data, totalRecords, page, pageSize);
+    const formattedData: ProjectListItemDTO[] = data.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      status: p.status,
+      projectType: p.projectType,
+      visibility: p.visibility as any,
+      publicationStatus: p.publicationStatus as any,
+      featured: p.featured,
+      domains: (p.domains || []).map((d: any) => ({
+        id: d.domain.id,
+        name: d.domain.name,
+        slug: d.domain.slug,
+      })),
+      technologies: (p.technologies || []).map((t: any) => ({
+        id: t.technology.id,
+        name: t.technology.name,
+        slug: t.technology.slug,
+        iconName: t.technology.iconName,
+      })),
+      updatedAt: p.updatedAt.toISOString(),
+      publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
+    }));
+
+    return formatPaginatedResult(formattedData, totalRecords, page, pageSize);
   }
 
   /**
-   * Fetches a single public project by slug with full case study relations.
+   * Fetches all projects for the admin workspace (Owner scoped).
    */
-  static async getPublicProjectBySlug(slug: string) {
-    const project = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.slug, slug),
-        eq(projects.status, 'completed'),
-        sql`${projects.publishedAt} IS NOT NULL`,
-        isNull(projects.deletedAt)
-      ),
-      with: {
-        technologies: {
-          with: {
-            technology: true,
-          },
-        },
-        skills: {
-          with: {
-            skill: true,
-          },
-        },
-        media: {
-          with: {
-            media: true,
-          },
-        },
-        links: true,
-      },
-    });
-
-    if (!project) {
-      throw new NotFoundError('Project', slug);
-    }
-
-    return project;
-  }
-
-  /**
-   * Fetches all projects for the admin workspace list.
-   */
-  static async getAdminProjects(params?: PaginationParams) {
+  static async getAdminProjects(
+    ownerId: string,
+    params?: PaginationParams
+  ): Promise<PaginatedResultDTO<ProjectListItemDTO>> {
     const { page, pageSize, offset, limit } = getPaginationOffset(params, 20);
 
-    const conditions = isNull(projects.deletedAt);
+    const conditions = and(eq(projects.ownerId, ownerId), isNull(projects.deletedAt));
 
     const [data, countResult] = await Promise.all([
       db.query.projects.findMany({
@@ -115,7 +133,11 @@ export class ProjectsService {
               technology: true,
             },
           },
-          links: true,
+          domains: {
+            with: {
+              domain: true,
+            },
+          },
         },
       }),
       db
@@ -125,19 +147,71 @@ export class ProjectsService {
     ]);
 
     const totalRecords = countResult[0]?.count || 0;
-    return formatPaginatedResult(data, totalRecords, page, pageSize);
+    const formattedData: ProjectListItemDTO[] = data.map((p) => ({
+      id: p.id,
+      title: p.title,
+      slug: p.slug,
+      status: p.status,
+      projectType: p.projectType,
+      visibility: p.visibility as any,
+      publicationStatus: p.publicationStatus as any,
+      featured: p.featured,
+      domains: (p.domains || []).map((d: any) => ({
+        id: d.domain.id,
+        name: d.domain.name,
+        slug: d.domain.slug,
+      })),
+      technologies: (p.technologies || []).map((t: any) => ({
+        id: t.technology.id,
+        name: t.technology.name,
+        slug: t.technology.slug,
+        iconName: t.technology.iconName,
+      })),
+      updatedAt: p.updatedAt.toISOString(),
+      publishedAt: p.publishedAt ? p.publishedAt.toISOString() : null,
+    }));
+
+    return formatPaginatedResult(formattedData, totalRecords, page, pageSize);
   }
 
   /**
-   * Fetches project by ID for admin edit form.
+   * Fetches project by ID for admin edit form (Owner scoped).
    */
-  static async getAdminProjectById(id: string) {
-    const project = await db.query.projects.findFirst({
-      where: and(eq(projects.id, id), isNull(projects.deletedAt)),
+  static async getProjectEditorById(
+    ownerId: string,
+    id: string,
+    executor: any = db
+  ): Promise<ProjectEditorDTO> {
+    const project = await executor.query.projects.findFirst({
+      where: and(eq(projects.id, id), eq(projects.ownerId, ownerId), isNull(projects.deletedAt)),
       with: {
-        technologies: true,
-        skills: true,
+        technologies: {
+          with: {
+            technology: true,
+          },
+        },
+        skills: {
+          with: {
+            skill: true,
+          },
+        },
+        domains: {
+          with: {
+            domain: true,
+          },
+        },
+        tags: {
+          with: {
+            tag: true,
+          },
+        },
         links: true,
+        caseStudy: true,
+        experiences: {
+          with: {
+            experience: true,
+          },
+        },
       },
     });
 
@@ -145,60 +219,124 @@ export class ProjectsService {
       throw new NotFoundError('Project', id);
     }
 
-    return project;
+    return {
+      id: project.id,
+      title: project.title,
+      slug: project.slug,
+      shortDescription: project.shortDescription,
+      description: project.description,
+      projectType: project.projectType,
+      problemStatement: project.problemStatement,
+      solution: project.solution,
+      architecture: project.architecture,
+      role: project.role,
+      roleSummary: project.roleSummary,
+      status: project.status,
+      startDate: project.startDate,
+      endDate: project.endDate,
+      repositoryUrl: project.repositoryUrl,
+      liveUrl: project.liveUrl,
+      featured: project.featured,
+      sortOrder: project.sortOrder,
+      visibility: project.visibility as any,
+      publicationStatus: project.publicationStatus as any,
+      publishedAt: project.publishedAt ? project.publishedAt.toISOString() : null,
+      archivedAt: project.archivedAt ? project.archivedAt.toISOString() : null,
+      domains: (project.domains || []).map((d: any) => ({
+        id: d.domain.id,
+        name: d.domain.name,
+        slug: d.domain.slug,
+      })),
+      skills: (project.skills || []).map((s: any) => ({
+        id: s.skill.id,
+        name: s.skill.name,
+        slug: s.skill.slug,
+      })),
+      technologies: (project.technologies || []).map((t: any) => ({
+        id: t.technology.id,
+        name: t.technology.name,
+        slug: t.technology.slug,
+        iconName: t.technology.iconName,
+      })),
+      tags: (project.tags || []).map((t: any) => ({
+        id: t.tag.id,
+        name: t.tag.name,
+        slug: t.tag.slug,
+      })),
+      experienceReferences: (project.experiences || []).map((e: any) => ({
+        id: e.experience.id,
+        title: e.experience.position,
+      })),
+      caseStudySummary: project.caseStudy
+        ? {
+            id: project.caseStudy.id,
+            title: project.caseStudy.title,
+            subtitle: project.caseStudy.subtitle,
+            executiveSummary: project.caseStudy.executiveSummary,
+            exists: true,
+          }
+        : undefined,
+      createdAt: project.createdAt.toISOString(),
+      updatedAt: project.updatedAt.toISOString(),
+    };
   }
 
   /**
-   * Creates a new project and syncs its junction relations atomically.
+   * Creates a new project with owner isolation and transactional junction sync.
    */
-  static async createProject(input: ProjectFormInput, actorId?: string) {
+  static async createProject(
+    ownerId: string,
+    input: ProjectFormInput,
+    actorId?: string
+  ): Promise<ProjectEditorDTO> {
     const finalSlug = input.slug?.trim() || slugify(input.title);
 
-    // Check slug uniqueness
     const existing = await db.query.projects.findFirst({
       where: eq(projects.slug, finalSlug),
     });
 
     if (existing) {
-      throw new ConflictError(`A project with slug "${finalSlug}" already exists.`);
+      throw new ConflictError(`Project with slug "${finalSlug}" already exists.`);
     }
 
     return await db.transaction(async (tx) => {
-      const publishedAt = input.published ? new Date() : null;
-
       const [newProject] = await tx
         .insert(projects)
         .values({
-          title: input.title,
+          ownerId,
+          title: input.title.trim(),
           slug: finalSlug,
           shortDescription: input.shortDescription || null,
           description: input.description || null,
+          projectType: input.projectType || null,
           problemStatement: input.problemStatement || null,
           solution: input.solution || null,
           architecture: input.architecture || null,
           role: input.role || null,
-          status: input.status,
+          roleSummary: input.roleSummary || null,
+          status: input.status || 'planning',
           startDate: input.startDate || null,
           endDate: input.endDate || null,
           repositoryUrl: input.repositoryUrl || null,
           liveUrl: input.liveUrl || null,
-          featured: input.featured,
-          publishedAt,
+          featured: input.featured || false,
+          sortOrder: input.sortOrder || 0,
+          visibility: input.visibility || 'private',
+          publicationStatus: 'draft', // Enforce DRAFT default per Amendment 3
         })
         .returning();
 
-      // Sync technologies
-      if (input.technologyIds.length > 0) {
-        await tx.insert(projectTechnologies).values(
-          input.technologyIds.map((techId) => ({
+      // Synchronize Junctions
+      if (input.domainIds && input.domainIds.length > 0) {
+        await tx.insert(projectDomains).values(
+          input.domainIds.map((domainId) => ({
             projectId: newProject.id,
-            technologyId: techId,
+            domainId,
           }))
         );
       }
 
-      // Sync skills
-      if (input.skillIds.length > 0) {
+      if (input.skillIds && input.skillIds.length > 0) {
         await tx.insert(projectSkills).values(
           input.skillIds.map((skillId) => ({
             projectId: newProject.id,
@@ -207,38 +345,60 @@ export class ProjectsService {
         );
       }
 
-      // Sync links
-      if (input.links.length > 0) {
+      if (input.technologyIds && input.technologyIds.length > 0) {
+        await tx.insert(projectTechnologies).values(
+          input.technologyIds.map((technologyId) => ({
+            projectId: newProject.id,
+            technologyId,
+          }))
+        );
+      }
+
+      if (input.tagIds && input.tagIds.length > 0) {
+        await tx.insert(projectTags).values(
+          input.tagIds.map((tagId) => ({
+            projectId: newProject.id,
+            tagId,
+          }))
+        );
+      }
+
+      if (input.links && input.links.length > 0) {
         await tx.insert(projectLinks).values(
           input.links.map((link, idx) => ({
             projectId: newProject.id,
-            label: link.label,
-            url: link.url,
-            linkType: link.linkType || null,
+            label: link.label.trim(),
+            url: link.url.trim(),
+            linkType: link.linkType || 'external',
             sortOrder: idx,
           }))
         );
       }
 
-      // Record Audit Log
       await AuditService.record(tx, {
-        actorId,
+        actorId: actorId || ownerId,
         action: 'PROJECT_CREATE',
         entityType: 'project',
         entityId: newProject.id,
         newValues: newProject,
       });
 
-      return newProject;
+      return await ProjectsService.getProjectEditorById(ownerId, newProject.id, tx);
     });
   }
 
   /**
-   * Updates an existing project and its junction relations atomically.
+   * Updates an existing project with owner isolation and transactional junction sync.
+   * Note: Does NOT modify publicationStatus (reserved for PublishingService per Amendment 3).
    */
-  static async updateProject(id: string, input: ProjectFormInput, actorId?: string) {
+  static async updateProject(
+    ownerId: string,
+    id: string,
+    input: ProjectFormInput,
+    actorId?: string
+  ): Promise<ProjectEditorDTO> {
     const existing = await db.query.projects.findFirst({
-      where: and(eq(projects.id, id), isNull(projects.deletedAt)),
+      where: and(eq(projects.id, id), eq(projects.ownerId, ownerId), isNull(projects.deletedAt)),
     });
 
     if (!existing) {
@@ -247,58 +407,56 @@ export class ProjectsService {
 
     const finalSlug = input.slug?.trim() || slugify(input.title);
 
-    // Check slug collision with other records
     if (finalSlug !== existing.slug) {
       const duplicate = await db.query.projects.findFirst({
         where: and(eq(projects.slug, finalSlug), sql`${projects.id} != ${id}`),
       });
       if (duplicate) {
-        throw new ConflictError(`Slug "${finalSlug}" is already taken by another project.`);
+        throw new ConflictError(`Slug "${finalSlug}" is already in use.`);
       }
     }
 
     return await db.transaction(async (tx) => {
-      const publishedAt = input.published
-        ? existing.publishedAt || new Date()
-        : null;
-
       const [updatedProject] = await tx
         .update(projects)
         .set({
-          title: input.title,
+          title: input.title.trim(),
           slug: finalSlug,
           shortDescription: input.shortDescription || null,
           description: input.description || null,
+          projectType: input.projectType || null,
           problemStatement: input.problemStatement || null,
           solution: input.solution || null,
           architecture: input.architecture || null,
           role: input.role || null,
-          status: input.status,
+          roleSummary: input.roleSummary || null,
+          status: input.status || existing.status,
           startDate: input.startDate || null,
           endDate: input.endDate || null,
           repositoryUrl: input.repositoryUrl || null,
           liveUrl: input.liveUrl || null,
-          featured: input.featured,
-          publishedAt,
+          featured: input.featured ?? existing.featured,
+          sortOrder: input.sortOrder ?? existing.sortOrder,
+          visibility: input.visibility || existing.visibility,
           updatedAt: new Date(),
         })
-        .where(eq(projects.id, id))
+        .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
         .returning();
 
-      // Reset and sync technologies
-      await tx.delete(projectTechnologies).where(eq(projectTechnologies.projectId, id));
-      if (input.technologyIds.length > 0) {
-        await tx.insert(projectTechnologies).values(
-          input.technologyIds.map((techId) => ({
+      // 1. Sync Domains
+      await tx.delete(projectDomains).where(eq(projectDomains.projectId, id));
+      if (input.domainIds && input.domainIds.length > 0) {
+        await tx.insert(projectDomains).values(
+          input.domainIds.map((domainId) => ({
             projectId: id,
-            technologyId: techId,
+            domainId,
           }))
         );
       }
 
-      // Reset and sync skills
+      // 2. Sync Skills
       await tx.delete(projectSkills).where(eq(projectSkills.projectId, id));
-      if (input.skillIds.length > 0) {
+      if (input.skillIds && input.skillIds.length > 0) {
         await tx.insert(projectSkills).values(
           input.skillIds.map((skillId) => ({
             projectId: id,
@@ -307,23 +465,44 @@ export class ProjectsService {
         );
       }
 
-      // Reset and sync links
+      // 3. Sync Technologies
+      await tx.delete(projectTechnologies).where(eq(projectTechnologies.projectId, id));
+      if (input.technologyIds && input.technologyIds.length > 0) {
+        await tx.insert(projectTechnologies).values(
+          input.technologyIds.map((technologyId) => ({
+            projectId: id,
+            technologyId,
+          }))
+        );
+      }
+
+      // 4. Sync Tags
+      await tx.delete(projectTags).where(eq(projectTags.projectId, id));
+      if (input.tagIds && input.tagIds.length > 0) {
+        await tx.insert(projectTags).values(
+          input.tagIds.map((tagId) => ({
+            projectId: id,
+            tagId,
+          }))
+        );
+      }
+
+      // 5. Sync Links
       await tx.delete(projectLinks).where(eq(projectLinks.projectId, id));
-      if (input.links.length > 0) {
+      if (input.links && input.links.length > 0) {
         await tx.insert(projectLinks).values(
           input.links.map((link, idx) => ({
             projectId: id,
-            label: link.label,
-            url: link.url,
-            linkType: link.linkType || null,
+            label: link.label.trim(),
+            url: link.url.trim(),
+            linkType: link.linkType || 'external',
             sortOrder: idx,
           }))
         );
       }
 
-      // Record Audit Log
       await AuditService.record(tx, {
-        actorId,
+        actorId: actorId || ownerId,
         action: 'PROJECT_UPDATE',
         entityType: 'project',
         entityId: id,
@@ -331,35 +510,29 @@ export class ProjectsService {
         newValues: updatedProject,
       });
 
-      return updatedProject;
+      return await ProjectsService.getProjectEditorById(ownerId, id, tx);
     });
   }
 
   /**
-   * Soft deletes or permanently deletes a project.
+   * Archives a project (Owner scoped).
    */
-  static async deleteProject(id: string, actorId?: string, permanent = false) {
+  static async archiveProject(ownerId: string, id: string, actorId?: string): Promise<void> {
     const existing = await db.query.projects.findFirst({
-      where: eq(projects.id, id),
+      where: and(eq(projects.id, id), eq(projects.ownerId, ownerId)),
     });
 
-    if (!existing) {
-      throw new NotFoundError('Project', id);
-    }
+    if (!existing) throw new NotFoundError('Project', id);
 
-    return await db.transaction(async (tx) => {
-      if (permanent) {
-        await tx.delete(projects).where(eq(projects.id, id));
-      } else {
-        await tx
-          .update(projects)
-          .set({ deletedAt: new Date(), updatedAt: new Date() })
-          .where(eq(projects.id, id));
-      }
+    await db.transaction(async (tx) => {
+      await tx
+        .update(projects)
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
 
       await AuditService.record(tx, {
-        actorId,
-        action: permanent ? 'PROJECT_PERMANENT_DELETE' : 'PROJECT_SOFT_DELETE',
+        actorId: actorId || ownerId,
+        action: 'PROJECT_ARCHIVE',
         entityType: 'project',
         entityId: id,
         oldValues: existing,
@@ -368,17 +541,28 @@ export class ProjectsService {
   }
 
   /**
-   * Fetches all available technologies and skills for project form selectors.
+   * Deletes a project (Soft delete, Owner scoped).
    */
-  static async getTaxonomyOptions() {
-    const [allTechs, allSkills] = await Promise.all([
-      db.select().from(technologies).orderBy(technologies.name),
-      db.select().from(skills).orderBy(skills.name),
-    ]);
+  static async deleteProject(ownerId: string, id: string, actorId?: string): Promise<void> {
+    const existing = await db.query.projects.findFirst({
+      where: and(eq(projects.id, id), eq(projects.ownerId, ownerId)),
+    });
 
-    return {
-      technologies: allTechs,
-      skills: allSkills,
-    };
+    if (!existing) throw new NotFoundError('Project', id);
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(projects)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
+
+      await AuditService.record(tx, {
+        actorId: actorId || ownerId,
+        action: 'PROJECT_DELETE',
+        entityType: 'project',
+        entityId: id,
+        oldValues: existing,
+      });
+    });
   }
 }

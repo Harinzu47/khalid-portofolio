@@ -1,24 +1,37 @@
-import { JournalService } from '@/services/journal.service';
+import { requireOwnerSession } from '@/lib/auth';
+import { ProjectsService } from '@/services/projects.service';
+import { TaxonomyService } from '@/services/taxonomy.service';
 import { JournalForm } from '../JournalForm';
 
 export default async function NewJournalPage() {
-  const taxonomy = await JournalService.getTaxonomyOptions();
+  const session = await requireOwnerSession();
+
+  const [projectsList, domainsList, skillsList, techList, tagsList] = await Promise.all([
+    ProjectsService.getProjectsSelector(session.userId),
+    TaxonomyService.getDomainsSelector(session.userId),
+    TaxonomyService.getSkillsSelector(session.userId),
+    TaxonomyService.getTechnologiesSelector(session.userId),
+    TaxonomyService.getTagsSelector(session.userId),
+  ]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-bold font-mono text-terminal-text-primary">
-          Create Journal Log
+          Log Engineering Journal Entry
         </h1>
         <p className="text-xs font-mono text-terminal-text-secondary">
-          Record daily engineering decisions, debugging steps, and system maintenance logs.
+          Capture development sessions, technical spikes, and architecture decisions.
         </p>
       </div>
 
       <JournalForm
         mode="create"
-        availableProjects={taxonomy.projects}
-        availableTechnologies={taxonomy.technologies}
+        availableProjects={projectsList}
+        availableDomains={domainsList}
+        availableSkills={skillsList}
+        availableTechnologies={techList}
+        availableTags={tagsList}
       />
     </div>
   );

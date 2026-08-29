@@ -65,8 +65,19 @@ export function AdminHeader({ userEmail, onOpenMobileNav }: AdminHeaderProps) {
         </nav>
       </div>
 
-      {/* Right: Public View Link & User Session Actions */}
-      <div className="flex items-center space-x-3">
+      {/* Right: Public View Link, Search & User Session Actions */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+          }}
+          className="hidden sm:inline-flex items-center space-x-2 px-2.5 py-1 rounded border border-terminal-border bg-terminal-bg text-[11px] font-mono text-terminal-text-muted hover:text-terminal-text-primary hover:border-terminal-text-secondary transition-colors"
+        >
+          <span>Search</span>
+          <kbd className="px-1 py-0.2 rounded bg-terminal-surface border border-terminal-border text-[9px]">⌘K</kbd>
+        </button>
+
         <Link
           href="/"
           target="_blank"

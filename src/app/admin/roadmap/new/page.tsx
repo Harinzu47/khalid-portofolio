@@ -1,18 +1,21 @@
+import { requireOwnerSession } from '@/lib/auth';
 import { RoadmapForm } from '../RoadmapForm';
 
-export default function NewRoadmapItemPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function NewRoadmapItemPage() {
+  await requireOwnerSession();
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold font-mono text-terminal-text-primary">
-          Create Roadmap Milestone
-        </h1>
-        <p className="text-xs font-mono text-terminal-text-secondary">
+        <h1 className="text-xl font-bold text-slate-100">Create Roadmap Milestone</h1>
+        <p className="text-xs text-slate-400 mt-1">
           Track future architectures, deployments, and systems engineering objectives.
         </p>
       </div>
 
-      <RoadmapForm mode="create" />
+      <RoadmapForm />
     </div>
   );
 }

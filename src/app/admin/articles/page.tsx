@@ -1,12 +1,14 @@
 import Link from 'next/link';
+import { requireOwnerSession } from '@/lib/auth';
 import { ArticlesService } from '@/services/articles.service';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
-import { DeleteArticleButton } from './DeleteArticleButton';
+import { ArchiveArticleButton } from './ArchiveArticleButton';
 import { Plus, Edit, ExternalLink, FileText } from 'lucide-react';
 
 export default async function AdminArticlesPage() {
-  const result = await ArticlesService.getAdminArticles({ page: 1, pageSize: 50 });
+  const session = await requireOwnerSession();
+  const result = await ArticlesService.getAdminArticles(session.userId, { page: 1, pageSize: 50 });
   const articlesList = result.data;
 
   return (
@@ -48,7 +50,7 @@ export default async function AdminArticlesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Publication</TableHead>
               <TableHead>Visibility</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Updated</TableHead>
@@ -62,7 +64,7 @@ export default async function AdminArticlesPage() {
                   <div className="space-y-0.5">
                     <div className="font-semibold text-terminal-text-primary flex items-center space-x-2">
                       <span>{article.title}</span>
-                      {article.featured && (
+                      {article.isFeatured && (
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-terminal-secondary/15 text-terminal-secondary border border-terminal-secondary/30">
                           featured
                         </span>
@@ -77,49 +79,43 @@ export default async function AdminArticlesPage() {
                 <TableCell>
                   <Badge
                     variant={
-                      article.status === 'published'
+                      article.publicationStatus === 'published'
                         ? 'primary'
-                        : article.status === 'review'
+                        : article.publicationStatus === 'review'
                         ? 'secondary'
                         : 'default'
                     }
                   >
-                    {article.status}
+                    {article.publicationStatus}
                   </Badge>
                 </TableCell>
 
                 <TableCell>
-                  {article.publishedAt ? (
-                    <span className="text-[11px] text-terminal-primary font-mono">
-                      ● Published
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-terminal-text-muted font-mono">
-                      ○ Draft
-                    </span>
-                  )}
+                  <span className="text-[11px] text-terminal-text-muted font-mono uppercase">
+                    {article.visibility}
+                  </span>
                 </TableCell>
 
                 <TableCell>
                   <div className="flex flex-wrap gap-1 max-w-xs">
-                    {article.tags.slice(0, 3).map((at) => (
+                    {(article.tags || []).slice(0, 3).map((t) => (
                       <span
-                        key={at.tag.id}
+                        key={t.id}
                         className="text-[10px] px-1.5 py-0.5 rounded bg-terminal-surface border border-terminal-border text-terminal-text-muted"
                       >
-                        #{at.tag.name}
+                        #{t.name}
                       </span>
                     ))}
-                    {article.tags.length > 3 && (
+                    {(article.tags || []).length > 3 && (
                       <span className="text-[10px] text-terminal-text-muted">
-                        +{article.tags.length - 3}
+                        +{(article.tags || []).length - 3}
                       </span>
                     )}
                   </div>
                 </TableCell>
 
                 <TableCell className="text-terminal-text-muted text-[11px]">
-                  {article.updatedAt.toLocaleDateString()}
+                  {new Date(article.updatedAt).toLocaleDateString()}
                 </TableCell>
 
                 <TableCell className="text-right">
@@ -141,7 +137,7 @@ export default async function AdminArticlesPage() {
                     >
                       <Edit className="w-4 h-4" />
                     </Link>
-                    <DeleteArticleButton
+                    <ArchiveArticleButton
                       articleId={article.id}
                       articleTitle={article.title}
                     />

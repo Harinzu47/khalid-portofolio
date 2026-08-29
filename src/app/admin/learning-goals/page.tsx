@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { RoadmapService } from '@/services/roadmap.service';
+import { LegacyLearningGoalsService } from '@/services/legacy-learning-goals.service';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { DeleteLearningGoalButton } from './DeleteLearningGoalButton';
 import { Plus, Edit, BookOpen } from 'lucide-react';
 
 export default async function AdminLearningGoalsPage() {
-  const goals = await RoadmapService.getLearningGoals();
+  const goals = await LegacyLearningGoalsService.getLearningGoals();
 
   return (
     <div className="space-y-6">

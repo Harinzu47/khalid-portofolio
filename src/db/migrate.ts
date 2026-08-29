@@ -87,20 +87,25 @@ async function runMigrations() {
     // 2. Ensure auth roles and schema exist before applying RLS
     await ensureSupabaseEnvironment(migrationClient);
 
-    // 3. Run custom RLS policies migration if present
-    const rlsMigrationPath = path.join(migrationsFolder, '0002_rls_policies.sql');
-    if (fs.existsSync(rlsMigrationPath)) {
-      console.log('🔒 Applying Row-Level Security (RLS) policies...');
+    // 3. Run all custom migrations (RLS, compatibility, junction additions, etc.) in sequential order
+    const customFiles = fs
+      .readdirSync(migrationsFolder)
+      .filter((file) => file.endsWith('.sql') && !file.startsWith('0000') && !file.startsWith('0001') && !file.startsWith('0002'))
+      .sort();
+
+    for (const customFile of customFiles) {
+      const filePath = path.join(migrationsFolder, customFile);
+      console.log(`📦 Applying custom migration from: ${customFile}...`);
       try {
-        const rlsSql = fs.readFileSync(rlsMigrationPath, 'utf8');
-        await migrationClient.unsafe(rlsSql);
-        console.log('✅ RLS policies applied successfully.');
+        const customSql = fs.readFileSync(filePath, 'utf8');
+        await migrationClient.unsafe(customSql);
+        console.log(`✅ ${customFile} applied successfully.`);
       } catch (err: unknown) {
         const pgErr = err as { code?: string; message?: string };
         if (pgErr?.code === '42710' || (pgErr?.message && pgErr.message.includes('already exists'))) {
-          console.log('ℹ️ RLS policies already present, retaining active security policies.');
+          console.log(`ℹ️ Objects in ${customFile} already present, skipping duplicate creation.`);
         } else {
-          throw err;
+          console.warn(`⚠️ Notice applying ${customFile}:`, pgErr?.message || err);
         }
       }
     }

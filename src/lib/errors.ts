@@ -1,12 +1,32 @@
 /**
- * Standardized Application Domain Error Classes
+ * Canonical Application Domain Error Codes per HZCODE API & Data Contract v1
  */
+export type AppErrorCode =
+  | 'AUTH_REQUIRED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'VALIDATION_ERROR'
+  | 'CONFLICT'
+  | 'PUBLISH_VALIDATION_FAILED'
+  | 'PUBLICATION_BLOCKED'
+  | 'RELATIONSHIP_INVALID'
+  | 'RELATIONSHIP_DUPLICATE'
+  | 'RELATIONSHIP_INCOMPATIBLE'
+  | 'MEDIA_INVALID'
+  | 'RATE_LIMITED'
+  | 'INTERNAL_ERROR'
+  | 'DATABASE_ERROR'
+  | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'; // Backwards-compatibility alias
 
+/**
+ * Standardized Application Domain Error Base Class
+ */
 export class AppError extends Error {
-  public readonly code: string;
+  public readonly code: AppErrorCode;
   public readonly statusCode: number;
 
-  constructor(message: string, code = 'INTERNAL_ERROR', statusCode = 500) {
+  constructor(message: string, code: AppErrorCode = 'INTERNAL_ERROR', statusCode = 500) {
     super(message);
     this.name = this.constructor.name;
     this.code = code;
@@ -24,9 +44,16 @@ export class ValidationError extends AppError {
   }
 }
 
+export class AuthRequiredError extends AppError {
+  constructor(message = 'Authentication required.') {
+    super(message, 'AUTH_REQUIRED', 401);
+  }
+}
+
+/** Backward compatibility alias for AuthRequiredError */
 export class UnauthorizedError extends AppError {
   constructor(message = 'Authentication required.') {
-    super(message, 'UNAUTHORIZED', 401);
+    super(message, 'AUTH_REQUIRED', 401);
   }
 }
 
@@ -46,6 +73,45 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   constructor(message: string) {
     super(message, 'CONFLICT', 409);
+  }
+}
+
+export class PublishValidationError extends AppError {
+  constructor(message: string) {
+    super(message, 'PUBLISH_VALIDATION_FAILED', 422);
+  }
+}
+
+export class RelationshipInvalidError extends AppError {
+  constructor(message: string) {
+    super(message, 'RELATIONSHIP_INVALID', 422);
+  }
+}
+
+export class RelationshipDuplicateError extends AppError {
+  constructor(message = 'An active relationship with the same source, target, and relationship type already exists.') {
+    super(message, 'RELATIONSHIP_DUPLICATE', 409);
+  }
+}
+
+export class RelationshipIncompatibleError extends AppError {
+  constructor(message = 'The specified relationship type is not compatible with the source and target entity types.') {
+    super(message, 'RELATIONSHIP_INCOMPATIBLE', 422);
+  }
+}
+
+export class MediaInvalidError extends AppError {
+  constructor(message: string) {
+    super(message, 'MEDIA_INVALID', 422);
+  }
+}
+
+export class RateLimitedError extends AppError {
+  public readonly resetSeconds?: number;
+
+  constructor(message = 'Rate limit exceeded.', resetSeconds?: number) {
+    super(message, 'RATE_LIMITED', 429);
+    this.resetSeconds = resetSeconds;
   }
 }
 

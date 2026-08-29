@@ -1,25 +1,45 @@
 /**
  * Central Database Schema Registry — Personal Developer OS
- * Complete 25-Table Relational Schema Specification
+ * Canonical Relational Schema Specification per HZCODE Database Domain Model v1
  */
 
-// 1. Identity & Profile
+// 1. Enums
+export * from './enums';
+
+// 2. Identity & Profile
 export * from './profile';
 
-// 2. Career & Organizations
+// 3. Career & Organizations
 export * from './career';
 
-// 3. Projects & Technical Stack
-export * from './projects';
+// 4. Domains & Competencies
+export * from './domains';
 
-// 4. Content, Articles & Journal
+// 5. Projects & Case Studies
+export * from './projects';
+export * from './case-studies';
+
+// 6. Content, Articles & Journal
 export * from './content';
 
-// 5. Learning & Roadmaps
+// 7. Architectural Decisions (ADR)
+export * from './adrs';
+
+// 8. Learning & Roadmaps
 export * from './learning';
 
-// 6. Audit & Governance
+// 9. Temporal Attention (Now)
+export * from './now';
+
+// 10. Semantic Knowledge Graph
+export * from './knowledge-graph';
+
+// 11. Audit & Governance
 export * from './audit';
 
-// 7. Relational Mappings
+// 12. Relational Mappings
 export * from './relations';
+
+// 13. Search Engine & Projections
+export * from './search';
+

@@ -62,10 +62,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isPrivateConsoleRoute =
+    request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/os');
 
-  // Protect /admin routes: redirect unauthenticated users to /login
-  if (isAdminRoute && !user) {
+  // Protect /admin and /os routes: redirect unauthenticated users to /login
+  if (isPrivateConsoleRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirect', request.nextUrl.pathname);
@@ -74,10 +75,12 @@ export async function updateSession(request: NextRequest) {
     return redirectRes;
   }
 
-  // Redirect authenticated users away from /login to /admin
+  // Redirect authenticated users away from /login to target or /os
   if (isAuthRoute && user) {
+    const redirectTarget = request.nextUrl.searchParams.get('redirect') || '/os';
     const url = request.nextUrl.clone();
-    url.pathname = '/admin';
+    url.pathname = redirectTarget.startsWith('/') ? redirectTarget : '/os';
+    url.searchParams.delete('redirect');
     const redirectRes = NextResponse.redirect(url);
     applySecurityHeaders(redirectRes.headers);
     return redirectRes;

@@ -1,22 +1,5 @@
-import type { Metadata } from 'next';
-import { ProjectsGrid } from '@/components/sections/ProjectsGrid';
-import { getAllProjects } from '@/lib/content';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Projects | hzcode',
-  description:
-    'Browse hzcode projects across four pillars: Infrastructure, Networking, Web Development, and AI.',
-};
-
-/**
- * /projects — standalone project listing page
- */
 export default function ProjectsPage() {
-  const projects = getAllProjects();
-
-  return (
-    <main className="min-h-screen bg-terminal-bg pt-20">
-      <ProjectsGrid projects={projects} />
-    </main>
-  );
+  redirect('/work');
 }

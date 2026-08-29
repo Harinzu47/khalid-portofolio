@@ -32,3 +32,30 @@ export function applySecurityHeaders(headers: Headers): void {
     headers.set(key, value);
   }
 }
+
+const ALLOWED_URL_SCHEMES = ['http:', 'https:', 'mailto:', 'tel:'];
+
+/**
+ * Validates and sanitizes public external URLs (Amendment 6).
+ * Disallows unsafe schemes like javascript:, data:, vbscript:.
+ */
+export function sanitizePublicUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  // Relative URLs starting with '/' are permitted
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (ALLOWED_URL_SCHEMES.includes(parsed.protocol)) {
+      return parsed.toString();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

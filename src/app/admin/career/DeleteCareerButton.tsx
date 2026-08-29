@@ -18,7 +18,7 @@ export function DeleteCareerButton({
 
   const handleDelete = () => {
     startDelete(async () => {
-      const res = await deleteCareerExperienceAction(experienceId, false);
+      const res = await deleteCareerExperienceAction(experienceId);
       if (res && res.success) {
         setIsOpen(false);
       }

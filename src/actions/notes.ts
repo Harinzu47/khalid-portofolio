@@ -1,16 +1,16 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
-import { NoteFormSchema } from '@/validations/note';
-import { NotesService } from '@/services/notes.service';
+import { requireOwnerSession } from '@/lib/auth';
+import { TechNoteFormSchema } from '@/validations/note';
+import { TechNoteService } from '@/services/notes.service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { ActionResult } from './auth';
 
 export async function createNoteAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/notes/new');
+  const session = await requireOwnerSession();
 
-  const parsed = NoteFormSchema.safeParse(rawInput);
+  const parsed = TechNoteFormSchema.safeParse(rawInput);
   if (!parsed.success) {
     return {
       success: false,
@@ -20,12 +20,14 @@ export async function createNoteAction(rawInput: unknown): Promise<ActionResult>
   }
 
   try {
-    const note = await NotesService.createNote(parsed.data, session.userId);
+    const note = await TechNoteService.createTechNote(session.userId, parsed.data);
     revalidatePath('/admin/notes');
+    revalidatePath('/admin/knowledge');
     revalidatePath('/notes');
     revalidatePath('/');
     redirect(`/admin/notes?created=${encodeURIComponent(note.title)}`);
-  } catch (err) {
+  } catch (err: any) {
+    if (err.digest?.startsWith('NEXT_REDIRECT')) throw err;
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to create note.',
@@ -34,9 +36,9 @@ export async function createNoteAction(rawInput: unknown): Promise<ActionResult>
 }
 
 export async function updateNoteAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/notes/${id}/edit`);
+  const session = await requireOwnerSession();
 
-  const parsed = NoteFormSchema.safeParse(rawInput);
+  const parsed = TechNoteFormSchema.safeParse(rawInput);
   if (!parsed.success) {
     return {
       success: false,
@@ -46,13 +48,15 @@ export async function updateNoteAction(id: string, rawInput: unknown): Promise<A
   }
 
   try {
-    await NotesService.updateNote(id, parsed.data, session.userId);
+    await TechNoteService.updateTechNote(session.userId, id, parsed.data);
     revalidatePath('/admin/notes');
+    revalidatePath('/admin/knowledge');
     revalidatePath('/notes');
     revalidatePath(`/notes/${parsed.data.slug || ''}`);
     revalidatePath('/');
     redirect('/admin/notes?updated=true');
-  } catch (err) {
+  } catch (err: any) {
+    if (err.digest?.startsWith('NEXT_REDIRECT')) throw err;
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Failed to update note.',
@@ -60,19 +64,27 @@ export async function updateNoteAction(id: string, rawInput: unknown): Promise<A
   }
 }
 
-export async function deleteNoteAction(id: string, permanent = false): Promise<ActionResult> {
-  const session = await requireAuth('/admin/notes');
+export async function archiveNoteAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
 
   try {
-    await NotesService.deleteNote(id, session.userId, permanent);
+    await TechNoteService.archiveTechNote(session.userId, id);
     revalidatePath('/admin/notes');
+    revalidatePath('/admin/knowledge');
     revalidatePath('/notes');
     revalidatePath('/');
     return { success: true };
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete note.',
+      error: err instanceof Error ? err.message : 'Failed to archive note.',
     };
   }
+}
+
+/**
+ * @deprecated Use archiveNoteAction instead.
+ */
+export async function deleteNoteAction(id: string, _hardDelete?: boolean): Promise<ActionResult> {
+  return archiveNoteAction(id);
 }

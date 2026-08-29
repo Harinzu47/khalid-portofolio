@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 import { Sheet } from '@/components/ui/Sheet';
+import { CommandPaletteModal } from './search/CommandPaletteModal';
 
 export interface AdminShellProps {
   userEmail: string;
@@ -41,6 +42,9 @@ export function AdminShell({ userEmail, children }: AdminShellProps) {
           <div className="max-w-7xl mx-auto space-y-6">{children}</div>
         </main>
       </div>
+
+      {/* Global Command Palette Modal (CMD+K / CTRL+K) */}
+      <CommandPaletteModal />
     </div>
   );
 }

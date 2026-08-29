@@ -18,7 +18,7 @@ export function DeleteProjectButton({
 
   const handleDelete = () => {
     startDelete(async () => {
-      const res = await deleteProjectAction(projectId, false);
+      const res = await deleteProjectAction(projectId);
       if (res && res.success) {
         setIsOpen(false);
       }

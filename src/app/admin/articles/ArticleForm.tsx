@@ -9,34 +9,30 @@ import { Select } from '@/components/ui/Select';
 import { Switch } from '@/components/ui/Switch';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
-import { Plus, X, Loader2, ArrowLeft } from 'lucide-react';
+import { Plus, X, Loader2, ArrowLeft, Info } from 'lucide-react';
 import Link from 'next/link';
-import type { ArticleFormInput } from '@/validations/article';
+import type { ArticleEditorDTO } from '@/types/dtos';
 
 export interface ArticleFormProps {
   mode: 'create' | 'edit';
   articleId?: string;
-  initialData?: {
-    title?: string;
-    slug?: string;
-    excerpt?: string | null;
-    content?: string;
-    status?: 'draft' | 'review' | 'published' | 'archived';
-    featured?: boolean;
-    published?: boolean;
-    seoTitle?: string | null;
-    seoDescription?: string | null;
-    tagNames?: string[];
-    projectIds?: string[];
-  };
-  availableProjects: { id: string; title: string }[];
+  initialData?: Partial<ArticleEditorDTO>;
+  availableProjects?: { id: string; name: string }[];
+  availableDomains?: { id: string; name: string }[];
+  availableSkills?: { id: string; name: string }[];
+  availableTechnologies?: { id: string; name: string }[];
+  availableTags?: { id: string; name: string }[];
 }
 
 export function ArticleForm({
   mode,
   articleId,
   initialData,
-  availableProjects,
+  availableProjects = [],
+  availableDomains = [],
+  availableSkills = [],
+  availableTechnologies = [],
+  availableTags = [],
 }: ArticleFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -46,35 +42,50 @@ export function ArticleForm({
   // Form State
   const [title, setTitle] = useState(initialData?.title || '');
   const [slug, setSlug] = useState(initialData?.slug || '');
+  const [subtitle, setSubtitle] = useState(initialData?.subtitle || '');
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || '');
   const [content, setContent] = useState(initialData?.content || '');
-  const [status, setStatus] = useState<ArticleFormInput['status']>(initialData?.status || 'draft');
+  const [readingTimeMinutes, setReadingTimeMinutes] = useState<number | undefined>(
+    initialData?.readingTimeMinutes || undefined
+  );
   const [featured, setFeatured] = useState(initialData?.featured || false);
-  const [published, setPublished] = useState(initialData?.published || false);
+  const [visibility, setVisibility] = useState(initialData?.visibility || 'private');
   const [seoTitle, setSeoTitle] = useState(initialData?.seoTitle || '');
   const [seoDescription, setSeoDescription] = useState(initialData?.seoDescription || '');
-  const [tagsList, setTagsList] = useState<string[]>(initialData?.tagNames || []);
-  const [tagInput, setTagInput] = useState('');
+
+  // Junction state
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(
     initialData?.projectIds || []
   );
+  const [selectedDomainIds, setSelectedDomainIds] = useState<string[]>(
+    (initialData?.domains || []).map((d) => d.id)
+  );
+  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>(
+    (initialData?.skills || []).map((s) => s.id)
+  );
+  const [selectedTechnologyIds, setSelectedTechnologyIds] = useState<string[]>(
+    (initialData?.technologies || []).map((t) => t.id)
+  );
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    (initialData?.tags || []).map((t) => t.id)
+  );
+  const [customTagNames, setCustomTagNames] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
 
-  const addTag = () => {
+  const addCustomTag = () => {
     const clean = tagInput.trim();
-    if (clean && !tagsList.includes(clean)) {
-      setTagsList((prev) => [...prev, clean]);
+    if (clean && !customTagNames.includes(clean)) {
+      setCustomTagNames((prev) => [...prev, clean]);
       setTagInput('');
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTagsList((prev) => prev.filter((t) => t !== tagToRemove));
+  const removeCustomTag = (tagToRemove: string) => {
+    setCustomTagNames((prev) => prev.filter((t) => t !== tagToRemove));
   };
 
-  const toggleProject = (id: string) => {
-    setSelectedProjectIds((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
+  const toggleItem = (list: string[], setList: (l: string[]) => void, id: string) => {
+    setList(list.includes(id) ? list.filter((i) => i !== id) : [...list, id]);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,14 +96,19 @@ export function ArticleForm({
     const payload = {
       title,
       slug: slug || undefined,
+      subtitle: subtitle || undefined,
       excerpt: excerpt || undefined,
       content,
-      status,
+      readingTimeMinutes: readingTimeMinutes ? Number(readingTimeMinutes) : undefined,
       featured,
-      published,
+      visibility,
       seoTitle: seoTitle || undefined,
       seoDescription: seoDescription || undefined,
-      tagNames: tagsList,
+      domainIds: selectedDomainIds,
+      skillIds: selectedSkillIds,
+      technologyIds: selectedTechnologyIds,
+      tagIds: selectedTagIds,
+      tagNames: customTagNames,
       projectIds: selectedProjectIds,
     };
 
@@ -141,7 +157,7 @@ export function ArticleForm({
                 <span>Saving...</span>
               </>
             ) : (
-              <span>{mode === 'create' ? 'Publish Article' : 'Save Changes'}</span>
+              <span>{mode === 'create' ? 'Create Article' : 'Save Changes'}</span>
             )}
           </Button>
         </div>
@@ -153,7 +169,7 @@ export function ArticleForm({
         </Alert>
       )}
 
-      {/* Main Content & Title */}
+      {/* 1. Article Composition */}
       <div className="p-6 rounded-lg border border-terminal-border bg-terminal-surface space-y-4">
         <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
           Article Composition
@@ -166,23 +182,39 @@ export function ArticleForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             error={fieldErrors.title?.[0]}
-            placeholder="e.g. Deep Dive: Zero-Downtime Migration in PostgreSQL"
+            placeholder="e.g. Zero-Downtime PostgreSQL Schema Migration"
           />
           <Input
             label="URL Slug (leave empty for auto-generation)"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             error={fieldErrors.slug?.[0]}
-            placeholder="zero-downtime-migration-postgresql"
+            placeholder="zero-downtime-postgresql-schema-migration"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Subtitle"
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+            placeholder="Optional explanatory subtitle"
+          />
+          <Input
+            label="Est. Reading Time (minutes)"
+            type="number"
+            value={readingTimeMinutes || ''}
+            onChange={(e) => setReadingTimeMinutes(e.target.value ? Number(e.target.value) : undefined)}
+            placeholder="5"
           />
         </div>
 
         <Input
-          label="Short Excerpt"
+          label="Short Excerpt / Summary"
           value={excerpt}
           onChange={(e) => setExcerpt(e.target.value)}
           error={fieldErrors.excerpt?.[0]}
-          placeholder="Brief summary displayed in article cards and RSS feeds"
+          placeholder="Brief synopsis displayed on cards and search results"
         />
 
         <Textarea
@@ -192,51 +224,128 @@ export function ArticleForm({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           error={fieldErrors.content?.[0]}
-          placeholder="# Introduction&#10;&#10;Write your deep technical breakdown in standard markdown..."
+          placeholder="# Introduction&#10;&#10;Write your technical deep-dive..."
         />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            label="Publication Status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ArticleFormInput['status'])}
-            options={[
-              { value: 'draft', label: 'Draft' },
-              { value: 'review', label: 'In Review' },
-              { value: 'published', label: 'Published' },
-              { value: 'archived', label: 'Archived' },
-            ]}
-          />
-        </div>
       </div>
 
-      {/* Taxonomy & Linked Projects */}
+      {/* 2. Taxonomy & Connections */}
       <div className="p-6 rounded-lg border border-terminal-border bg-terminal-surface space-y-6">
+        <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
+          Structural Connections & Taxonomy
+        </h2>
+
+        {/* Domains */}
+        {availableDomains.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-terminal-text-secondary">Engineering Domains</label>
+            <div className="flex flex-wrap gap-2">
+              {availableDomains.map((domain) => (
+                <button
+                  type="button"
+                  key={domain.id}
+                  onClick={() => toggleItem(selectedDomainIds, setSelectedDomainIds, domain.id)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
+                    selectedDomainIds.includes(domain.id)
+                      ? 'bg-terminal-secondary/15 text-terminal-secondary border-terminal-secondary/40'
+                      : 'bg-terminal-bg text-terminal-text-muted border-terminal-border hover:text-terminal-text-primary'
+                  }`}
+                >
+                  {domain.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Technologies */}
+        {availableTechnologies.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-terminal-text-secondary">Technologies</label>
+            <div className="flex flex-wrap gap-2">
+              {availableTechnologies.map((tech) => (
+                <button
+                  type="button"
+                  key={tech.id}
+                  onClick={() => toggleItem(selectedTechnologyIds, setSelectedTechnologyIds, tech.id)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
+                    selectedTechnologyIds.includes(tech.id)
+                      ? 'bg-terminal-primary/15 text-terminal-primary border-terminal-primary/40'
+                      : 'bg-terminal-bg text-terminal-text-muted border-terminal-border hover:text-terminal-text-primary'
+                  }`}
+                >
+                  {tech.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects */}
+        {availableProjects.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-xs font-mono text-terminal-text-secondary">Linked Projects</label>
+            <div className="flex flex-wrap gap-2">
+              {availableProjects.map((proj) => (
+                <button
+                  type="button"
+                  key={proj.id}
+                  onClick={() => toggleItem(selectedProjectIds, setSelectedProjectIds, proj.id)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
+                    selectedProjectIds.includes(proj.id)
+                      ? 'bg-terminal-accent/15 text-terminal-accent border-terminal-accent/40'
+                      : 'bg-terminal-bg text-terminal-text-muted border-terminal-border hover:text-terminal-text-primary'
+                  }`}
+                >
+                  {proj.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
         <div className="space-y-3">
-          <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
-            Tags & Taxonomy
-          </h2>
-          <div className="flex items-center space-x-2">
+          <label className="text-xs font-mono text-terminal-text-secondary">Tags</label>
+          {availableTags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {availableTags.map((tag) => (
+                <button
+                  type="button"
+                  key={tag.id}
+                  onClick={() => toggleItem(selectedTagIds, setSelectedTagIds, tag.id)}
+                  className={`px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
+                    selectedTagIds.includes(tag.id)
+                      ? 'bg-terminal-primary/15 text-terminal-primary border-terminal-primary/40'
+                      : 'bg-terminal-bg text-terminal-text-muted border-terminal-border hover:text-terminal-text-primary'
+                  }`}
+                >
+                  #{tag.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center space-x-2 pt-2">
             <Input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  addTag();
+                  addCustomTag();
                 }
               }}
-              placeholder="Type a tag (e.g. postgres, performance, devops) and press Enter"
+              placeholder="Type a new tag name and press Enter"
             />
-            <Button type="button" variant="outline" size="sm" onClick={addTag}>
+            <Button type="button" variant="outline" size="sm" onClick={addCustomTag}>
               <Plus className="w-3.5 h-3.5 mr-1" />
               <span>Add</span>
             </Button>
           </div>
 
-          {tagsList.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {tagsList.map((tag) => (
+          {customTagNames.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {customTagNames.map((tag) => (
                 <span
                   key={tag}
                   className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-terminal-bg border border-terminal-border text-xs font-mono text-terminal-text-primary"
@@ -244,7 +353,7 @@ export function ArticleForm({
                   <span>#{tag}</span>
                   <button
                     type="button"
-                    onClick={() => removeTag(tag)}
+                    onClick={() => removeCustomTag(tag)}
                     className="text-terminal-text-muted hover:text-terminal-accent"
                   >
                     <X className="w-3 h-3" />
@@ -254,77 +363,71 @@ export function ArticleForm({
             </div>
           )}
         </div>
-
-        {availableProjects.length > 0 && (
-          <div className="space-y-3 pt-4 border-t border-terminal-border">
-            <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
-              Linked Case Studies / Projects ({selectedProjectIds.length} Selected)
-            </h2>
-            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-terminal-border rounded bg-terminal-bg">
-              {availableProjects.map((p) => {
-                const isSelected = selectedProjectIds.includes(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => toggleProject(p.id)}
-                    className={`px-2.5 py-1 text-xs font-mono rounded border transition-colors ${
-                      isSelected
-                        ? 'bg-terminal-secondary/20 border-terminal-secondary text-terminal-secondary font-semibold'
-                        : 'border-terminal-border text-terminal-text-secondary hover:border-terminal-text-muted'
-                    }`}
-                  >
-                    {p.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* SEO & Meta */}
+      {/* 3. Visibility & Publication Status */}
       <div className="p-6 rounded-lg border border-terminal-border bg-terminal-surface space-y-4">
         <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
-          SEO & OpenGraph Metadata
+          Visibility & Readiness
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Visibility"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as 'private' | 'unlisted' | 'public')}
+            options={[
+              { value: 'private', label: 'Private (Owner only)' },
+              { value: 'unlisted', label: 'Unlisted (Direct link only)' },
+              { value: 'public', label: 'Public (Discoverable when published)' },
+            ]}
+          />
+
+          <div className="flex flex-col justify-center space-y-1">
+            <label className="text-xs font-mono text-terminal-text-secondary">Featured Article</label>
+            <div className="flex items-center space-x-2 pt-1">
+              <Switch checked={featured} onCheckedChange={setFeatured} />
+              <span className="text-xs font-mono text-terminal-text-muted">
+                Highlight on portfolio and feed headers
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3 rounded bg-terminal-bg border border-terminal-border flex items-start space-x-2.5 text-xs font-mono text-terminal-text-muted">
+          <Info className="w-4 h-4 text-terminal-secondary shrink-0 mt-0.5" />
+          <div>
+            <span>Publication Status: </span>
+            <strong className="text-terminal-text-primary uppercase">
+              {initialData?.publicationStatus || 'draft'}
+            </strong>
+            <p className="text-[11px] text-terminal-text-muted mt-0.5">
+              New articles default to DRAFT. Public publishing transitions are managed by the Publishing Engine.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. SEO Configurations */}
+      <div className="p-6 rounded-lg border border-terminal-border bg-terminal-surface space-y-4">
+        <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
+          Search Engine Optimization (SEO)
         </h2>
 
         <Input
-          label="Custom SEO Title (optional)"
+          label="Custom SEO Title"
           value={seoTitle}
           onChange={(e) => setSeoTitle(e.target.value)}
-          placeholder="Defaults to Article Title"
+          placeholder="Defaults to article title if empty"
         />
 
         <Textarea
-          label="Custom SEO Description (optional)"
-          rows={2}
+          label="Custom Meta Description"
+          rows={3}
           value={seoDescription}
           onChange={(e) => setSeoDescription(e.target.value)}
-          placeholder="Defaults to Short Excerpt"
+          placeholder="Defaults to article excerpt if empty"
         />
-      </div>
-
-      {/* Visibility & Publishing */}
-      <div className="p-6 rounded-lg border border-terminal-border bg-terminal-surface space-y-4">
-        <h2 className="text-xs font-mono font-bold text-terminal-text-primary uppercase tracking-wider">
-          Publishing Controls
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Switch
-            checked={published}
-            onCheckedChange={setPublished}
-            label="Published to Public Feed"
-            description="When active, this article will appear in public index, RSS, and sitemaps."
-          />
-          <Switch
-            checked={featured}
-            onCheckedChange={setFeatured}
-            label="Featured Article"
-            description="Highlight this article on the homepage knowledge base showcase."
-          />
-        </div>
       </div>
     </form>
   );

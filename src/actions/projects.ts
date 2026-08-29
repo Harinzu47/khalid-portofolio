@@ -1,78 +1,91 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
+import { requireOwnerSession } from '@/lib/auth';
 import { ProjectFormSchema } from '@/validations/project';
 import { ProjectsService } from '@/services/projects.service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { ActionResult } from './auth';
+import {
+  type ActionResult,
+  actionFieldErr,
+  actionOk,
+  actionSuccess,
+  fromError,
+} from '@/lib/action-result';
 
 export async function createProjectAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/projects/new');
+  const session = await requireOwnerSession();
 
   const parsed = ProjectFormSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    return actionFieldErr(parsed.error.flatten().fieldErrors);
   }
 
   try {
-    const project = await ProjectsService.createProject(parsed.data, session.userId);
+    const project = await ProjectsService.createProject(session.userId, parsed.data, session.userId);
     revalidatePath('/admin/projects');
+    revalidatePath('/os/projects');
     revalidatePath('/projects');
     revalidatePath('/');
     redirect(`/admin/projects?created=${encodeURIComponent(project.title)}`);
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to create project.',
-    };
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || (err instanceof Error && err.message === 'NEXT_REDIRECT')) {
+      throw err;
+    }
+    return fromError(err);
   }
 }
 
 export async function updateProjectAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/projects/${id}/edit`);
+  const session = await requireOwnerSession();
 
   const parsed = ProjectFormSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    return actionFieldErr(parsed.error.flatten().fieldErrors);
   }
 
   try {
-    await ProjectsService.updateProject(id, parsed.data, session.userId);
+    await ProjectsService.updateProject(session.userId, id, parsed.data, session.userId);
     revalidatePath('/admin/projects');
+    revalidatePath('/os/projects');
     revalidatePath('/projects');
     revalidatePath(`/projects/${parsed.data.slug || ''}`);
     revalidatePath('/');
     redirect('/admin/projects?updated=true');
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to update project.',
-    };
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || (err instanceof Error && err.message === 'NEXT_REDIRECT')) {
+      throw err;
+    }
+    return fromError(err);
   }
 }
 
-export async function deleteProjectAction(id: string, permanent = false): Promise<ActionResult> {
-  const session = await requireAuth('/admin/projects');
+export async function archiveProjectAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
 
   try {
-    await ProjectsService.deleteProject(id, session.userId, permanent);
+    await ProjectsService.archiveProject(session.userId, id, session.userId);
     revalidatePath('/admin/projects');
+    revalidatePath('/os/projects');
     revalidatePath('/projects');
     revalidatePath('/');
-    return { success: true };
+    return actionSuccess({ archived: true });
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete project.',
-    };
+    return fromError(err);
+  }
+}
+
+export async function deleteProjectAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
+
+  try {
+    await ProjectsService.deleteProject(session.userId, id, session.userId);
+    revalidatePath('/admin/projects');
+    revalidatePath('/os/projects');
+    revalidatePath('/projects');
+    revalidatePath('/');
+    return actionOk();
+  } catch (err) {
+    return fromError(err);
   }
 }

@@ -6,12 +6,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export interface ActionResult<T = unknown> {
-  success: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-  data?: T;
-}
+import { type ActionResult } from '@/lib/action-result';
+export type { ActionResult };
 
 /**
  * Authenticates operator with Supabase Auth using email/password.

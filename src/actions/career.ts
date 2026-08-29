@@ -1,101 +1,111 @@
 'use server';
 
-import { requireAuth } from '@/lib/auth';
+import { requireOwnerSession } from '@/lib/auth';
 import { CareerExperienceFormSchema, OrganizationFormSchema } from '@/validations/career';
 import { CareerService } from '@/services/career.service';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { ActionResult } from './auth';
+import {
+  actionSuccess,
+  actionFailure,
+  actionFieldErr,
+  fromError,
+  type ActionResult,
+} from '@/lib/action-result';
 
 export async function createCareerExperienceAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/career/new');
+  const session = await requireOwnerSession();
 
   const parsed = CareerExperienceFormSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    return actionFieldErr(parsed.error.flatten().fieldErrors);
   }
 
   try {
-    const exp = await CareerService.createCareerExperience(parsed.data, session.userId);
+    const exp = await CareerService.createCareerExperience(session.userId, parsed.data, session.userId);
     revalidatePath('/admin/career');
+    revalidatePath('/os/career');
     revalidatePath('/about');
     revalidatePath('/');
     redirect(`/admin/career?created=${encodeURIComponent(exp.position)}`);
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to create career experience.',
-    };
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || (err instanceof Error && err.message === 'NEXT_REDIRECT')) {
+      throw err;
+    }
+    return fromError(err);
   }
 }
 
-export async function updateCareerExperienceAction(id: string, rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth(`/admin/career/${id}/edit`);
+export async function updateCareerExperienceAction(
+  id: string,
+  rawInput: unknown
+): Promise<ActionResult> {
+  const session = await requireOwnerSession();
 
   const parsed = CareerExperienceFormSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Please correct the validation errors below.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    return actionFieldErr(parsed.error.flatten().fieldErrors);
   }
 
   try {
-    await CareerService.updateCareerExperience(id, parsed.data, session.userId);
+    await CareerService.updateCareerExperience(session.userId, id, parsed.data, session.userId);
     revalidatePath('/admin/career');
+    revalidatePath('/os/career');
     revalidatePath('/about');
     revalidatePath('/');
     redirect('/admin/career?updated=true');
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to update career experience.',
-    };
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT') || (err instanceof Error && err.message === 'NEXT_REDIRECT')) {
+      throw err;
+    }
+    return fromError(err);
   }
 }
 
-export async function deleteCareerExperienceAction(id: string, permanent = false): Promise<ActionResult> {
-  const session = await requireAuth('/admin/career');
+export async function archiveCareerExperienceAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
 
   try {
-    await CareerService.deleteCareerExperience(id, session.userId, permanent);
+    await CareerService.archiveCareerExperience(session.userId, id, session.userId);
     revalidatePath('/admin/career');
+    revalidatePath('/os/career');
     revalidatePath('/about');
     revalidatePath('/');
-    return { success: true };
+    return actionSuccess({ archived: true });
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to delete career experience.',
-    };
+    return fromError(err);
+  }
+}
+
+export async function deleteCareerExperienceAction(id: string): Promise<ActionResult> {
+  const session = await requireOwnerSession();
+
+  try {
+    await CareerService.deleteCareerExperience(session.userId, id, session.userId);
+    revalidatePath('/admin/career');
+    revalidatePath('/os/career');
+    revalidatePath('/about');
+    revalidatePath('/');
+    return actionSuccess({ deleted: true });
+  } catch (err) {
+    return fromError(err);
   }
 }
 
 export async function createOrganizationAction(rawInput: unknown): Promise<ActionResult> {
-  const session = await requireAuth('/admin/career');
+  const session = await requireOwnerSession();
 
   const parsed = OrganizationFormSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return {
-      success: false,
-      error: 'Invalid organization data.',
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
+    return actionFieldErr(parsed.error.flatten().fieldErrors);
   }
 
   try {
-    await CareerService.createOrganization(parsed.data, session.userId);
+    const org = await CareerService.createOrganization(session.userId, parsed.data, session.userId);
     revalidatePath('/admin/career');
-    return { success: true };
+    revalidatePath('/os/career');
+    return actionSuccess(org);
   } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Failed to create organization.',
-    };
+    return fromError(err);
   }
 }

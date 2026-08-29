@@ -1,24 +1,24 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { deleteMediaAction } from '@/actions/media';
-import { Trash2, Loader2 } from 'lucide-react';
+import { archiveJournalAction } from '@/actions/journal';
+import { Archive, Loader2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 
-export function DeleteMediaButton({
-  mediaId,
-  filename,
+export function ArchiveJournalButton({
+  journalId,
+  journalTitle,
 }: {
-  mediaId: string;
-  filename: string;
+  journalId: string;
+  journalTitle: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, startDelete] = useTransition();
+  const [isArchiving, startArchive] = useTransition();
 
-  const handleDelete = () => {
-    startDelete(async () => {
-      const res = await deleteMediaAction(mediaId);
+  const handleArchive = () => {
+    startArchive(async () => {
+      const res = await archiveJournalAction(journalId);
       if (res && res.success) {
         setIsOpen(false);
       }
@@ -30,24 +30,24 @@ export function DeleteMediaButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="p-1.5 rounded bg-terminal-bg/80 text-terminal-text-muted hover:text-terminal-accent hover:bg-terminal-accent/10 transition-colors"
-        title="Delete Media"
+        className="p-1.5 rounded text-terminal-text-muted hover:text-terminal-accent hover:bg-terminal-accent/10 transition-colors"
+        title="Archive Journal Entry"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Archive className="w-4 h-4" />
       </button>
 
       <Dialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Confirm Media Asset Deletion"
+        title="Confirm Soft Archive"
         maxWidth="sm"
       >
         <div className="space-y-4 font-mono text-xs">
           <p className="text-terminal-text-secondary">
-            Are you sure you want to delete file <strong className="text-terminal-text-primary">"{filename}"</strong>?
+            Are you sure you want to archive <strong className="text-terminal-text-primary">"{journalTitle}"</strong>?
           </p>
           <p className="text-[11px] text-terminal-text-muted">
-            This will permanently remove the asset and disconnect it from any linked projects.
+            The journal entry will be soft-archived and removed from public listings immediately.
           </p>
 
           <div className="flex justify-end space-x-2 pt-2">
@@ -55,23 +55,23 @@ export function DeleteMediaButton({
               variant="outline"
               size="sm"
               onClick={() => setIsOpen(false)}
-              disabled={isDeleting}
+              disabled={isArchiving}
             >
               Cancel
             </Button>
             <button
               type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
+              onClick={handleArchive}
+              disabled={isArchiving}
               className="px-3 py-1.5 rounded text-xs font-mono font-semibold bg-terminal-accent text-white hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center space-x-1"
             >
-              {isDeleting ? (
+              {isArchiving ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Deleting...</span>
+                  <span>Archiving...</span>
                 </>
               ) : (
-                <span>Confirm Delete</span>
+                <span>Confirm Archive</span>
               )}
             </button>
           </div>
@@ -80,3 +80,5 @@ export function DeleteMediaButton({
     </>
   );
 }
+
+export const DeleteJournalButton = ArchiveJournalButton;

@@ -55,6 +55,67 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/projects',
+        destination: '/work',
+        permanent: true,
+      },
+      {
+        source: '/projects/:slug',
+        destination: '/work/:slug',
+        permanent: true,
+      },
+      {
+        source: '/articles',
+        destination: '/system?type=ARTICLE',
+        permanent: true,
+      },
+      {
+        source: '/notes',
+        destination: '/system?type=TECH_NOTE',
+        permanent: true,
+      },
+      {
+        source: '/journal',
+        destination: '/system?type=JOURNAL_ENTRY',
+        permanent: true,
+      },
+      {
+        source: '/certificates',
+        destination: '/expertise',
+        permanent: true,
+      },
+      {
+        source: '/roadmap',
+        destination: '/now',
+        permanent: true,
+      },
+      {
+        source: '/graph',
+        destination: '/system',
+        permanent: true,
+      },
+      {
+        source: '/terminal',
+        destination: '/about',
+        permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/os',
+        destination: '/admin',
+      },
+      {
+        source: '/os/:path*',
+        destination: '/admin/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
