@@ -16,7 +16,7 @@ on:
 
 jobs:
   db-check:
-    name: Verify Drizzle Migrations Drift
+    name: Verify Drizzle Migrations Integrity
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -34,9 +34,62 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci || npm install --legacy-peer-deps
+        run: npm ci
 
-      - name: Verify Schema Generation
+      - name: Verify Drizzle Journal Integrity
+        run: |
+          echo "=== Drizzle Migration Journal Integrity Check ==="
+
+          JOURNAL_FILE="src/db/migrations/meta/_journal.json"
+
+          if [ ! -f "$JOURNAL_FILE" ]; then
+            echo "ERROR: Drizzle journal file not found at $JOURNAL_FILE"
+            exit 1
+          fi
+
+          # Validate JSON syntax
+          if ! node -e "JSON.parse(require('fs').readFileSync('$JOURNAL_FILE', 'utf8'))"; then
+            echo "ERROR: Drizzle journal is not valid JSON"
+            exit 1
+          fi
+
+          # Verify idx sequence is contiguous (0, 1, 2, ...)
+          node -e "
+            const journal = JSON.parse(require('fs').readFileSync('$JOURNAL_FILE', 'utf8'));
+            const entries = journal.entries || [];
+            let errors = [];
+
+            for (let i = 0; i < entries.length; i++) {
+              if (entries[i].idx !== i) {
+                errors.push('idx mismatch: expected ' + i + ' but got ' + entries[i].idx + ' for tag ' + entries[i].tag);
+              }
+              // Verify referenced SQL file exists
+              const sqlFile = 'src/db/migrations/' + entries[i].tag + '.sql';
+              if (!require('fs').existsSync(sqlFile)) {
+                errors.push('Missing SQL file: ' + sqlFile + ' (referenced by journal entry idx=' + i + ')');
+              }
+            }
+
+            // Check for orphan SQL files not in journal
+            const fs = require('fs');
+            const sqlFiles = fs.readdirSync('src/db/migrations').filter(f => f.endsWith('.sql'));
+            const journalTags = new Set(entries.map(e => e.tag + '.sql'));
+            for (const file of sqlFiles) {
+              if (!journalTags.has(file)) {
+                errors.push('Orphan SQL migration file not tracked in journal: ' + file);
+              }
+            }
+
+            if (errors.length > 0) {
+              console.error('Drizzle Journal Integrity Errors:');
+              errors.forEach(e => console.error('  - ' + e));
+              process.exit(1);
+            }
+
+            console.log('✓ Journal integrity verified: ' + entries.length + ' entries, all idx contiguous, all SQL files present, no orphans.');
+          "
+
+      - name: Verify Schema Generation (No Drift)
         run: npx drizzle-kit generate
 
       - name: Check for Uncommitted Migration Drift

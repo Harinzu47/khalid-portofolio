@@ -17,7 +17,7 @@ import {
   media,
   nowEntries,
 } from '@/db/schema';
-import { eq, sql, and, notInArray, gt, lt } from 'drizzle-orm';
+import { eq, sql, and, isNull } from 'drizzle-orm';
 import { SearchSyncService } from './search-sync.service';
 import {
   SEARCH_PROJECTION_VERSION,
@@ -357,11 +357,34 @@ export class SearchOperationsService {
       byTypeBreakdown[r.entityType] = r.count;
     }
 
+    // 5. Calculate real missing projections (entities without search document)
+    let missingProjections = 0;
+    const [
+      artMissing,
+      noteMissing,
+      adrMissing,
+      jnlMissing,
+      projMissing,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(articles).where(and(eq(articles.ownerId, ownerId), isNull(articles.archivedAt), sql`NOT EXISTS (SELECT 1 FROM ${searchDocuments} WHERE ${searchDocuments.entityId} = ${articles.id} AND ${searchDocuments.entityType} = 'ARTICLE')`)),
+      db.select({ count: sql<number>`count(*)::int` }).from(notes).where(and(eq(notes.ownerId, ownerId), isNull(notes.archivedAt), sql`NOT EXISTS (SELECT 1 FROM ${searchDocuments} WHERE ${searchDocuments.entityId} = ${notes.id} AND ${searchDocuments.entityType} = 'TECH_NOTE')`)),
+      db.select({ count: sql<number>`count(*)::int` }).from(adrs).where(and(eq(adrs.ownerId, ownerId), isNull(adrs.archivedAt), sql`NOT EXISTS (SELECT 1 FROM ${searchDocuments} WHERE ${searchDocuments.entityId} = ${adrs.id} AND ${searchDocuments.entityType} = 'ADR')`)),
+      db.select({ count: sql<number>`count(*)::int` }).from(journalEntries).where(and(eq(journalEntries.ownerId, ownerId), isNull(journalEntries.archivedAt), sql`NOT EXISTS (SELECT 1 FROM ${searchDocuments} WHERE ${searchDocuments.entityId} = ${journalEntries.id} AND ${searchDocuments.entityType} = 'JOURNAL_ENTRY')`)),
+      db.select({ count: sql<number>`count(*)::int` }).from(projects).where(and(eq(projects.ownerId, ownerId), isNull(projects.archivedAt), sql`NOT EXISTS (SELECT 1 FROM ${searchDocuments} WHERE ${searchDocuments.entityId} = ${projects.id} AND ${searchDocuments.entityType} = 'PROJECT')`)),
+    ]);
+
+    missingProjections =
+      (artMissing[0]?.count || 0) +
+      (noteMissing[0]?.count || 0) +
+      (adrMissing[0]?.count || 0) +
+      (jnlMissing[0]?.count || 0) +
+      (projMissing[0]?.count || 0);
+
     return {
       indexedDocuments,
       staleDocuments,
       orphanDocuments: 0,
-      missingProjections: 0,
+      missingProjections,
       lastReindexAt,
       byTypeBreakdown,
     };

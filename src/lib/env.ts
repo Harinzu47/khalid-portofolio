@@ -19,10 +19,37 @@ export const PrivilegedEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required'),
 });
 
+/**
+ * Schema for optional operational environment variables.
+ * These enable degraded-mode features; absence must not crash the application.
+ */
+export const OptionalEnvSchema = z.object({
+  CRON_SECRET: z.string().min(1).optional(),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
+  OWNER_USER_ID: z.string().uuid().optional(),
+});
+
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;
 export type PrivilegedEnv = z.infer<typeof PrivilegedEnvSchema>;
 
 export type ServiceRoleKeyStatus = 'VALID' | 'INVALID' | 'MISSING';
+
+/**
+ * Environment variable criticality classification.
+ */
+export type EnvCriticality = 'CRITICAL' | 'PRIVILEGED' | 'OPTIONAL';
+
+export interface EnvVariableReport {
+  name: string;
+  criticality: EnvCriticality;
+  status: 'PRESENT' | 'MISSING' | 'INVALID';
+  error?: string;
+}
+
+export interface EnvValidationReport {
+  healthy: boolean;
+  variables: EnvVariableReport[];
+}
 
 /**
  * Validates baseline server environment variables.
@@ -99,4 +126,91 @@ export function requirePrivilegedEnv(): { supabaseUrl: string; serviceRoleKey: s
   }
 
   return { supabaseUrl, serviceRoleKey };
+}
+
+/**
+ * Phase 11: Comprehensive environment validation report.
+ * Distinguishes CRITICAL (app cannot operate), PRIVILEGED (admin features degraded),
+ * and OPTIONAL (feature disabled gracefully) variables.
+ *
+ * Never logs or exposes secret values — only names and statuses.
+ */
+export function validateAllEnv(): EnvValidationReport {
+  const variables: EnvVariableReport[] = [];
+  let healthy = true;
+
+  // --- CRITICAL: Application cannot safely operate without these ---
+  const criticalVars: Array<{ name: string; value: string | undefined; validate?: (v: string) => string | null }> = [
+    {
+      name: 'NEXT_PUBLIC_SUPABASE_URL',
+      value: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      validate: (v) => {
+        try { new URL(v); return null; } catch { return 'Not a valid URL'; }
+      },
+    },
+    {
+      name: 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+      value: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    },
+    {
+      name: 'DATABASE_URL',
+      value: process.env.DATABASE_URL,
+    },
+  ];
+
+  for (const v of criticalVars) {
+    if (!v.value) {
+      variables.push({ name: v.name, criticality: 'CRITICAL', status: 'MISSING' });
+      healthy = false;
+    } else if (v.validate) {
+      const error = v.validate(v.value);
+      if (error) {
+        variables.push({ name: v.name, criticality: 'CRITICAL', status: 'INVALID', error });
+        healthy = false;
+      } else {
+        variables.push({ name: v.name, criticality: 'CRITICAL', status: 'PRESENT' });
+      }
+    } else {
+      variables.push({ name: v.name, criticality: 'CRITICAL', status: 'PRESENT' });
+    }
+  }
+
+  // --- PRIVILEGED: Admin/service-role features degraded without these ---
+  const serviceKeyStatus = getServiceRoleKeyStatus();
+  variables.push({
+    name: 'SUPABASE_SERVICE_ROLE_KEY',
+    criticality: 'PRIVILEGED',
+    status: serviceKeyStatus === 'MISSING' ? 'MISSING' : serviceKeyStatus === 'INVALID' ? 'INVALID' : 'PRESENT',
+    ...(serviceKeyStatus === 'INVALID' && { error: 'JWT role claim is not service_role' }),
+  });
+
+  // --- OPTIONAL: Feature disabled gracefully when absent ---
+  const optionalVars: Array<{ name: string; value: string | undefined; validate?: (v: string) => string | null }> = [
+    {
+      name: 'NEXT_PUBLIC_SITE_URL',
+      value: process.env.NEXT_PUBLIC_SITE_URL,
+      validate: (v) => {
+        try { new URL(v); return null; } catch { return 'Not a valid URL'; }
+      },
+    },
+    { name: 'CRON_SECRET', value: process.env.CRON_SECRET },
+    { name: 'OWNER_USER_ID', value: process.env.OWNER_USER_ID },
+  ];
+
+  for (const v of optionalVars) {
+    if (!v.value) {
+      variables.push({ name: v.name, criticality: 'OPTIONAL', status: 'MISSING' });
+    } else if (v.validate) {
+      const error = v.validate(v.value);
+      if (error) {
+        variables.push({ name: v.name, criticality: 'OPTIONAL', status: 'INVALID', error });
+      } else {
+        variables.push({ name: v.name, criticality: 'OPTIONAL', status: 'PRESENT' });
+      }
+    } else {
+      variables.push({ name: v.name, criticality: 'OPTIONAL', status: 'PRESENT' });
+    }
+  }
+
+  return { healthy, variables };
 }

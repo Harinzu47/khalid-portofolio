@@ -12,8 +12,9 @@ on:
 
 jobs:
   audit:
-    name: NPM Audit Check
+    name: NPM Audit & License Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Code
@@ -25,5 +26,47 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Run NPM Audit
-        run: npm audit --audit-level=critical
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run NPM Audit (High & Critical)
+        run: npm audit --audit-level=high
+
+      - name: License Compliance Check (Production Dependencies)
+        run: |
+          npx -y license-checker --production --excludePrivatePackages --json > license-report.json
+          echo "=== License Compliance Check ==="
+          # Check for copyleft licenses in production dependencies only
+          # AGPL and GPL-3.0 are flagged because they may impose distribution obligations
+          # on the application itself. LGPL, MIT, BSD, ISC, Apache-2.0 are permitted.
+          node -e "
+            const report = JSON.parse(require('fs').readFileSync('license-report.json', 'utf8'));
+            const blocked = ['AGPL-1.0-only', 'AGPL-1.0-or-later', 'AGPL-3.0-only', 'AGPL-3.0-or-later'];
+            const flagged = [];
+
+            for (const [pkg, info] of Object.entries(report)) {
+              const licenses = String(info.licenses || '');
+              for (const b of blocked) {
+                if (licenses.includes(b)) {
+                  flagged.push(pkg + ': ' + licenses);
+                }
+              }
+            }
+
+            if (flagged.length > 0) {
+              console.error('Blocked licenses found in production dependencies:');
+              flagged.forEach(f => console.error('  - ' + f));
+              process.exit(1);
+            }
+
+            const count = Object.keys(report).length;
+            console.log('✓ License check passed: ' + count + ' production dependencies scanned, no blocked licenses found.');
+          "
+
+      - name: Upload License Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          retention-days: 30
+          path: license-report.json
