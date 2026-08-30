@@ -22,6 +22,7 @@ export default async function EditSkillPage({
     category: skill.category || undefined,
     description: skill.description,
     proficiencyLevel: skill.proficiencyLevel,
+    visibility: (skill.visibility || 'public') as any,
   };
 
   return (

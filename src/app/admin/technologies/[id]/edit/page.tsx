@@ -23,6 +23,7 @@ export default async function EditTechnologyPage({
     description: tech.description,
     websiteUrl: tech.websiteUrl,
     iconName: tech.iconName,
+    visibility: (tech.visibility || 'public') as any,
   };
 
   return (

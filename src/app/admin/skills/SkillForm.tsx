@@ -20,6 +20,7 @@ export interface SkillFormProps {
     category?: string;
     description?: string | null;
     proficiencyLevel?: number | null;
+    visibility?: 'public' | 'unlisted' | 'private';
   };
 }
 
@@ -37,6 +38,9 @@ export function SkillForm({ mode, skillId, initialData }: SkillFormProps) {
   const [proficiencyLevel, setProficiencyLevel] = useState<string>(
     initialData?.proficiencyLevel ? String(initialData.proficiencyLevel) : '4'
   );
+  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(
+    initialData?.visibility || 'public'
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +53,7 @@ export function SkillForm({ mode, skillId, initialData }: SkillFormProps) {
       category,
       description: description || undefined,
       proficiencyLevel: proficiencyLevel ? Number(proficiencyLevel) : null,
+      visibility,
     };
 
     startTransition(async () => {
@@ -132,7 +137,7 @@ export function SkillForm({ mode, skillId, initialData }: SkillFormProps) {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             label="Pillar / Category"
             value={category}
@@ -157,6 +162,17 @@ export function SkillForm({ mode, skillId, initialData }: SkillFormProps) {
               { value: '3', label: '3 - Competent Production' },
               { value: '4', label: '4 - Advanced Specialist' },
               { value: '5', label: '5 - Master / Architect' },
+            ]}
+          />
+
+          <Select
+            label="Visibility Privacy Level"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as any)}
+            options={[
+              { value: 'public', label: 'PUBLIC — Visible on /expertise' },
+              { value: 'unlisted', label: 'UNLISTED — Direct reference only' },
+              { value: 'private', label: 'PRIVATE — Internal OS only' },
             ]}
           />
         </div>

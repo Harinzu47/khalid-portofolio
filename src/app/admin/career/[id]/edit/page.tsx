@@ -30,6 +30,7 @@ export default async function EditCareerPage({
     isCurrent: exp.isCurrent,
     description: exp.description,
     sortOrder: exp.sortOrder,
+    visibility: (exp.visibility || 'private') as any,
   };
 
   return (

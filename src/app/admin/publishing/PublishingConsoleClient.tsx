@@ -14,6 +14,7 @@ import type {
 } from '@/types/dtos/publishing.dto';
 import { PublishConfirmModal } from '@/components/admin/publishing/PublishConfirmModal';
 import { ScheduleModal } from '@/components/admin/publishing/ScheduleModal';
+import { changeVisibilityAction } from '@/actions/publishing';
 
 interface PublishingConsoleClientProps {
   initialOverview: PublishingOverviewDTO;
@@ -29,6 +30,46 @@ export function PublishingConsoleClient({
   const [selectedType, setSelectedType] = useState<string>('all');
   const [items, setItems] = useState<PublishingListItemDTO[]>(initialItems);
   const [overview] = useState<PublishingOverviewDTO>(initialOverview);
+  const [changingVisibilityId, setChangingVisibilityId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleVisibilityChange = async (
+    entityType: PublishableEntityType,
+    entityId: string,
+    newVisibility: Visibility
+  ) => {
+    setChangingVisibilityId(entityId);
+    setToastMessage(null);
+
+    const res = await changeVisibilityAction({
+      entityType,
+      entityId,
+      visibility: newVisibility,
+    });
+
+    setChangingVisibilityId(null);
+
+    if (res.success) {
+      setItems((prev) =>
+        prev.map((i) =>
+          i.id === entityId && i.entityType === entityType
+            ? { ...i, visibility: newVisibility }
+            : i
+        )
+      );
+      setToastMessage({
+        text: `Visibility updated to ${newVisibility.toUpperCase()}`,
+        type: 'success',
+      });
+      setTimeout(() => setToastMessage(null), 3000);
+    } else {
+      setToastMessage({
+        text: res.error || 'Failed to update visibility.',
+        type: 'error',
+      });
+      setTimeout(() => setToastMessage(null), 5000);
+    }
+  };
 
   // Quick Action Modal
   const [activeAction, setActiveAction] = useState<{
@@ -200,12 +241,31 @@ export function PublishingConsoleClient({
         </div>
       </div>
 
-      {/* Items Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div
+          className={`p-3 rounded-lg text-xs font-mono font-medium flex items-center justify-between border ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+              : 'bg-rose-950/60 text-rose-300 border-rose-800'
+          }`}
+        >
+          <span>{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-zinc-400 hover:text-zinc-200 text-xs ml-4"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
+      {/* Main Publishing Table */}
+      <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-zinc-300">
-            <thead className="bg-zinc-950/60 border-b border-zinc-800 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-              <tr>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900/80 text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
                 <th className="py-3 px-4">Entity</th>
                 <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Status</th>
@@ -215,27 +275,20 @@ export function PublishingConsoleClient({
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/60">
+            <tbody className="divide-y divide-zinc-800/60 text-xs">
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-zinc-500 text-xs">
-                    No entities found matching the selected filters.
+                  <td colSpan={7} className="py-12 text-center text-zinc-500 font-mono text-xs">
+                    No items found matching the selected filter criteria.
                   </td>
                 </tr>
               ) : (
                 filteredItems.map((item) => (
                   <tr key={`${item.entityType}-${item.id}`} className="hover:bg-zinc-800/30 transition-colors">
                     <td className="py-3 px-4">
-                      <div className="font-medium text-zinc-100 max-w-xs truncate">
-                        <Link
-                          href={getEntityEditUrl(item.entityType, item.id)}
-                          className="hover:text-blue-400 transition-colors"
-                        >
-                          {item.title}
-                        </Link>
-                      </div>
+                      <div className="font-medium text-zinc-100 line-clamp-1">{item.title}</div>
                       {item.slug && (
-                        <div className="text-[11px] font-mono text-zinc-500 truncate max-w-xs">
+                        <div className="text-[11px] font-mono text-zinc-500 line-clamp-1">
                           /{item.slug}
                         </div>
                       )}
@@ -254,9 +307,27 @@ export function PublishingConsoleClient({
                     </td>
 
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border ${getVisibilityBadge(item.visibility)}`}>
-                        {item.visibility}
-                      </span>
+                      <select
+                        value={item.visibility}
+                        disabled={changingVisibilityId === item.id}
+                        onChange={(e) =>
+                          handleVisibilityChange(item.entityType, item.id, e.target.value as Visibility)
+                        }
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase border bg-zinc-900 cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500 ${getVisibilityBadge(
+                          item.visibility
+                        )} ${changingVisibilityId === item.id ? 'opacity-50' : ''}`}
+                        title="Click to switch visibility level"
+                      >
+                        <option value="public" className="bg-zinc-900 text-emerald-400">
+                          PUBLIC
+                        </option>
+                        <option value="unlisted" className="bg-zinc-900 text-amber-400">
+                          UNLISTED
+                        </option>
+                        <option value="private" className="bg-zinc-900 text-zinc-400">
+                          PRIVATE
+                        </option>
+                      </select>
                     </td>
 
                     <td className="py-3 px-4 whitespace-nowrap">

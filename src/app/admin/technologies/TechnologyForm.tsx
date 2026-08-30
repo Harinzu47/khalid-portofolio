@@ -21,6 +21,7 @@ export interface TechnologyFormProps {
     description?: string | null;
     websiteUrl?: string | null;
     iconName?: string | null;
+    visibility?: 'public' | 'unlisted' | 'private';
   };
 }
 
@@ -37,6 +38,9 @@ export function TechnologyForm({ mode, technologyId, initialData }: TechnologyFo
   const [description, setDescription] = useState(initialData?.description || '');
   const [websiteUrl, setWebsiteUrl] = useState(initialData?.websiteUrl || '');
   const [iconName, setIconName] = useState(initialData?.iconName || '');
+  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(
+    initialData?.visibility || 'public'
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +54,7 @@ export function TechnologyForm({ mode, technologyId, initialData }: TechnologyFo
       description: description || undefined,
       websiteUrl: websiteUrl || undefined,
       iconName: iconName || undefined,
+      visibility,
     };
 
     startTransition(async () => {
@@ -158,12 +163,25 @@ export function TechnologyForm({ mode, technologyId, initialData }: TechnologyFo
           />
         </div>
 
-        <Input
-          label="Icon Identifier (Lucide / SimpleIcons slug)"
-          value={iconName}
-          onChange={(e) => setIconName(e.target.value)}
-          placeholder="kubernetes"
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Icon Identifier (Lucide / SimpleIcons slug)"
+            value={iconName}
+            onChange={(e) => setIconName(e.target.value)}
+            placeholder="kubernetes"
+          />
+
+          <Select
+            label="Visibility Privacy Level"
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as any)}
+            options={[
+              { value: 'public', label: 'PUBLIC — Visible on Public /expertise & Tech Stacks' },
+              { value: 'unlisted', label: 'UNLISTED — Accessible only via direct reference' },
+              { value: 'private', label: 'PRIVATE — Internal Developer OS Only' },
+            ]}
+          />
+        </div>
 
         <Textarea
           label="Description / Context"

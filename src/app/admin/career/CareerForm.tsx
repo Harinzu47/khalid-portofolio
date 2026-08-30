@@ -26,6 +26,7 @@ export interface CareerFormProps {
     isCurrent?: boolean;
     description?: string | null;
     sortOrder?: number;
+    visibility?: 'public' | 'unlisted' | 'private';
   };
   organizations: { id: string; name: string }[];
 }
@@ -52,6 +53,9 @@ export function CareerForm({
   const [isCurrent, setIsCurrent] = useState(initialData?.isCurrent || false);
   const [description, setDescription] = useState(initialData?.description || '');
   const [sortOrder, setSortOrder] = useState(initialData?.sortOrder || 0);
+  const [visibility, setVisibility] = useState<'public' | 'unlisted' | 'private'>(
+    initialData?.visibility || 'private'
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +73,7 @@ export function CareerForm({
       isCurrent,
       description: description || undefined,
       sortOrder: Number(sortOrder) || 0,
+      visibility,
     };
 
     startTransition(async () => {
@@ -235,6 +240,17 @@ export function CareerForm({
             onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
           />
         </div>
+
+        <Select
+          label="Visibility Privacy Level"
+          value={visibility}
+          onChange={(e) => setVisibility(e.target.value as any)}
+          options={[
+            { value: 'public', label: 'PUBLIC — Visible on Public /experience & Home' },
+            { value: 'unlisted', label: 'UNLISTED — Accessible only via direct URL reference' },
+            { value: 'private', label: 'PRIVATE — Internal Developer OS Only' },
+          ]}
+        />
       </div>
 
       {/* Responsibilities & Achievements */}

@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getPublicImpactPreviewAction, publishNowAction } from '@/actions/publishing';
+import {
+  getPublicImpactPreviewAction,
+  publishNowAction,
+  changeVisibilityAction,
+} from '@/actions/publishing';
 import type { PublishableEntityType } from '@/domain/publishing';
 import type { PublicImpactPreviewDTO } from '@/types/dtos/publishing.dto';
 
@@ -73,6 +77,13 @@ export function PublishConfirmModal({
         setPublishing(false);
         return;
       }
+
+      // Automatically upgrade visibility from private to public upon confirming live publication
+      await changeVisibilityAction({
+        entityType,
+        entityId,
+        visibility: 'public',
+      });
 
       onSuccess();
       onClose();
