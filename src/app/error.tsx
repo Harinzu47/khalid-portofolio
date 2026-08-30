@@ -1,15 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
-/**
- * Root Error Boundary — catches unhandled client-side rendering errors.
- * Uses the existing terminal design language for consistency.
- *
- * Production: no stack traces, no internal paths, no environment values.
- * Server logs receive the full error via structured logger.
- */
-export default function Error({
+export default function GlobalErrorPage({
   error,
   reset,
 }: {
@@ -17,58 +11,46 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to server-side structured logger would happen via error reporting
-    // In production, only the digest is available for correlation
-    console.error('[ErrorBoundary]', error.digest || 'unhandled-error');
+    // Log error to monitoring if needed
+    console.error('Unhandled public application error:', error);
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-terminal-bg flex items-center justify-center px-6">
+    <div className="min-h-[70vh] bg-surface-main text-text-primary flex items-center justify-center px-6 py-24">
       <div className="max-w-lg w-full">
-        <div className="border border-terminal-border bg-terminal-surface rounded p-8">
-          {/* Window chrome */}
-          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-terminal-border">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 opacity-70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-600 opacity-70" />
-            <span className="w-2.5 h-2.5 rounded-full bg-terminal-primary opacity-70" />
-            <span className="font-mono text-xs text-terminal-text-muted ml-2">
-              error — recovery
-            </span>
+        <div className="border border-border-subtle bg-surface-container/50 p-8 md:p-12 space-y-6">
+          <div className="font-mono text-xs uppercase tracking-widest text-text-secondary">
+            [ 500 / SYSTEM EXCEPTION ]
           </div>
 
-          <div className="font-mono text-sm space-y-2">
-            <p>
-              <span className="text-terminal-primary">$ </span>
-              <span className="text-terminal-text-primary">render page</span>
-            </p>
-            <p className="text-red-400">
-              Error: Something went wrong while loading this page.
-            </p>
-            {error.digest && (
-              <p className="text-terminal-text-muted text-xs">
-                error id: {error.digest}
-              </p>
-            )}
-          </div>
+          <h1 className="font-headline text-3xl sm:text-4xl font-extrabold text-text-primary uppercase tracking-tight">
+            SYSTEM EXECUTION ERROR
+          </h1>
 
-          <div className="mt-8 pt-6 border-t border-terminal-border">
-            <p className="text-terminal-text-secondary mb-6">
-              An unexpected error occurred. You can try again or navigate back to the home page.
-            </p>
-            <div className="flex flex-wrap gap-3 font-mono text-sm">
-              <button
-                onClick={reset}
-                className="px-4 py-2 border border-terminal-primary text-terminal-primary hover:bg-terminal-primary/10 rounded transition-colors cursor-pointer"
-              >
-                $ retry
-              </button>
-              <a
-                href="/"
-                className="px-4 py-2 border border-terminal-border text-terminal-text-secondary hover:border-terminal-text-muted rounded transition-colors"
-              >
-                $ cd ~/hzcode
-              </a>
+          <p className="font-sans text-sm md:text-base text-text-secondary leading-relaxed">
+            An unexpected runtime condition interrupted this operation. The incident context has been recorded.
+          </p>
+
+          {error.digest && (
+            <div className="font-mono text-[11px] text-text-secondary p-3 border border-border-subtle bg-surface-main">
+              DIGEST: {error.digest}
             </div>
+          )}
+
+          <div className="pt-4 flex flex-wrap gap-4 font-mono text-xs">
+            <button
+              type="button"
+              onClick={() => reset()}
+              className="px-5 py-2.5 bg-text-primary text-surface-main uppercase tracking-wider font-semibold hover:bg-accent-technical transition-colors cursor-pointer"
+            >
+              Retry Operation
+            </button>
+            <Link
+              href="/"
+              className="px-5 py-2.5 border border-border-subtle bg-surface-main text-text-primary uppercase tracking-wider font-semibold hover:border-text-primary transition-colors"
+            >
+              &larr; Return Home
+            </Link>
           </div>
         </div>
       </div>

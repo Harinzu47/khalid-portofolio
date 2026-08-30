@@ -5,14 +5,14 @@ import { SectionHeader } from '@/components/public/SectionHeader';
 import { ExpertiseView } from '@/components/public/expertise/ExpertiseView';
 
 export const metadata: Metadata = {
-  title: 'Expertise | HZCODE',
+  title: 'Expertise | HZCODE — Demonstrable Capabilities',
   description:
     'Demonstrable engineering capabilities across cloud infrastructure, distributed systems, network architecture, and developer operating systems backed by verified production evidence.',
   alternates: {
     canonical: '/expertise',
   },
   openGraph: {
-    title: 'Expertise | HZCODE — Evidence-Backed Engineering Capabilities',
+    title: 'Expertise | HZCODE — Demonstrable Capabilities',
     description:
       'Demonstrable engineering capabilities backed by verified production projects, experience, and knowledge records.',
     url: '/expertise',
@@ -26,13 +26,13 @@ export default async function ExpertisePage() {
     expertise.domains.length + expertise.technologies.length + expertise.skills.length;
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-24">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer>
         <SectionHeader
-          category="DEMONSTRABLE CAPABILITIES"
-          title="Evidence-Backed Engineering Expertise"
+          category="01 / DEMONSTRABLE CAPABILITIES"
+          title="Engineering Expertise & Systems Surface."
           subtitle="Concrete capabilities substantiated by production systems, organizational responsibility, architectural decision records, and technical essays."
-          badge={`CAPABILITIES: ${totalCapabilities}`}
+          badge={`${totalCapabilities} CAPABILITIES`}
         />
 
         <ExpertiseView expertise={expertise} />

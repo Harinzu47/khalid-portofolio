@@ -5,7 +5,7 @@ import { SectionHeader } from '@/components/public/SectionHeader';
 import { KnowledgeHubClient } from '@/components/public/system/KnowledgeHubClient';
 
 export const metadata: Metadata = {
-  title: 'System | HZCODE Knowledge Hub',
+  title: 'System | HZCODE — Knowledge Hub & Learning in Public',
   description:
     'Learning in public: Technical essays, verified engineering notes, architecture decision records, and development investigations by Khalid Jundullah.',
   alternates: {
@@ -41,13 +41,13 @@ export default async function SystemPage({ searchParams }: SystemPageProps) {
   });
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-24">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer>
         <SectionHeader
-          category="KNOWLEDGE SYSTEM"
-          title="Learning in Public & Technical Synthesis"
-          subtitle="Long-form architectural essays, concise operational tech notes, architectural decision records (ADRs), and daily engineering logs."
-          badge={`ARTIFACTS: ${items.length}`}
+          category="01 / KNOWLEDGE SYSTEM"
+          title="Learning in Public."
+          subtitle="An evolving record of what I learn, build, investigate and understand across systems architecture, cloud platforms, and distributed engineering."
+          badge={`${items.length} ENTRIES`}
         />
 
         <KnowledgeHubClient

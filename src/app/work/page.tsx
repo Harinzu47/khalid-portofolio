@@ -5,16 +5,16 @@ import { SectionHeader } from '@/components/public/SectionHeader';
 import { WorkClient } from '@/components/public/work/WorkClient';
 
 export const metadata: Metadata = {
-  title: 'Work | HZCODE',
+  title: 'Work | HZCODE — Systems I\'ve Built',
   description:
-    'Production systems, cloud infrastructure architectures, distributed services, and engineering case studies delivered by Khalid Jundullah.',
+    'A catalog of systems, production environments, and fullstack tools engineered for performance, reliability, and scale by Khalid Jundullah.',
   alternates: {
     canonical: '/work',
   },
   openGraph: {
-    title: 'Work | HZCODE — Engineering Systems & Architectures',
+    title: 'Work | HZCODE — Systems I\'ve Built',
     description:
-      'Production systems, cloud infrastructure architectures, distributed services, and engineering case studies.',
+      'A catalog of systems, production environments, and fullstack tools engineered for performance, reliability, and scale.',
     url: '/work',
     type: 'website',
   },
@@ -32,13 +32,13 @@ export default async function WorkPage({ searchParams }: WorkPageProps) {
   const projects = await PublicReadModelsService.getWorkIndex({ pillar, search });
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-20">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer>
         <SectionHeader
-          category="WORK ARCHIVE"
-          title="Engineered Systems & Delivered Work"
-          subtitle="Production systems, cloud infrastructure architectures, distributed services, and technical case studies."
-          badge={`TOTAL: ${projects.length}`}
+          category="01 / WORK ARCHIVE"
+          title="Systems I've Built."
+          subtitle="A catalog of systems, production environments, and fullstack tools engineered for performance, reliability, and scale."
+          badge={`${projects.length} PROJECTS`}
         />
 
         <WorkClient

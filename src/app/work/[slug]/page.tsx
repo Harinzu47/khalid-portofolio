@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
     alternates: {
       canonical: `/work/${project.slug}`,
     },
-    robots: project.isUnlisted ? { index: false, follow: false } : undefined, // Amendment 27
+    robots: project.isUnlisted ? { index: false, follow: false } : undefined,
     openGraph: {
       title,
       description,
@@ -49,7 +49,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-24">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer>
         <ProjectDetailView project={project} />
       </PublicContainer>

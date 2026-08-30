@@ -1,175 +1,172 @@
-import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronRight, Calendar, Clock } from 'lucide-react';
-import { BreadcrumbItem, PrevNextNavigation } from '@/features/routing/types';
-import { ContentNode } from '@/features/knowledge/types';
+import { ReactNode } from 'react';
+import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export interface ContentLayoutProps {
-  node: ContentNode;
-  breadcrumbs: BreadcrumbItem[];
-  prevNext: PrevNextNavigation;
-  relatedNodes?: ContentNode[];
-  skills?: { id: string; name: string }[];
-  technologies?: { id: string; name: string }[];
-  children: React.ReactNode;
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
 }
 
-/**
- * Enterprise Content Layout Shell
- * Standardized detail page layout with breadcrumbs, metadata, related content, and prev/next navigation
- */
+export interface RelatedItem {
+  title: string;
+  href: string;
+  type: string;
+}
+
+export interface ContentLayoutProps {
+  category?: string;
+  title: string;
+  subtitle?: string;
+  breadcrumbs?: BreadcrumbItem[];
+  metadata?: ReactNode;
+  tags?: string[];
+  relatedItems?: RelatedItem[];
+  pagination?: {
+    prev?: { title: string; href: string };
+    next?: { title: string; href: string };
+  };
+  children: ReactNode;
+  className?: string;
+}
+
 export function ContentLayout({
-  node,
+  category,
+  title,
+  subtitle,
   breadcrumbs,
-  prevNext,
-  relatedNodes = [],
-  skills = [],
-  technologies = [],
+  metadata,
+  tags,
+  relatedItems,
+  pagination,
   children,
+  className,
 }: ContentLayoutProps) {
-  const parentHref = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].href : '/';
-
   return (
-    <div className="min-h-screen bg-terminal-bg">
-      {/* Breadcrumbs Sticky Navigation */}
-      <header className="sticky top-0 z-40 bg-terminal-bg/95 border-b border-terminal-border py-3">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between font-mono text-xs text-terminal-text-muted">
-          <Link
-            href={parentHref}
-            className="inline-flex items-center gap-1.5 hover:text-terminal-secondary transition-colors group"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            <span>back</span>
-          </Link>
+    <div className="min-h-screen bg-surface-main text-text-primary">
+      {/* Breadcrumb bar */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <header className="sticky top-0 z-40 bg-surface-main/95 border-b border-border-subtle py-3">
+          <div className="max-w-4xl mx-auto px-6 flex items-center justify-between font-mono text-xs text-text-secondary">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 overflow-x-auto py-1">
+              {breadcrumbs.map((crumb, idx) => (
+                <div key={crumb.label} className="flex items-center gap-1.5 shrink-0">
+                  {idx > 0 && <ChevronRight className="w-3 h-3 text-text-secondary opacity-50" />}
+                  {crumb.href ? (
+                    <Link
+                      href={crumb.href}
+                      className={cn(
+                        'hover:text-text-primary transition-colors',
+                        idx === breadcrumbs.length - 1 ? 'text-text-primary font-semibold' : ''
+                      )}
+                    >
+                      {crumb.label}
+                    </Link>
+                  ) : (
+                    <span className="text-text-primary font-semibold">{crumb.label}</span>
+                  )}
+                </div>
+              ))}
+            </nav>
+          </div>
+        </header>
+      )}
 
-          {/* Breadcrumbs Trail */}
-          <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 overflow-x-auto">
-            {breadcrumbs.map((crumb, idx) => (
-              <React.Fragment key={crumb.href}>
-                {idx > 0 && <ChevronRight className="w-3 h-3 text-terminal-text-muted opacity-50" />}
-                <Link
-                  href={crumb.href}
-                  className={`hover:text-terminal-secondary transition-colors truncate max-w-[150px] ${
-                    idx === breadcrumbs.length - 1 ? 'text-terminal-text-primary font-semibold' : ''
-                  }`}
-                >
-                  {crumb.label}
-                </Link>
-              </React.Fragment>
-            ))}
-          </nav>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-6 py-12">
-        {/* Page Header */}
-        <header className="mb-10 pb-8 border-b border-terminal-border">
-          <div className="flex flex-wrap items-center gap-3 mb-3 font-mono text-xs text-terminal-text-muted">
-            <span className="uppercase text-terminal-primary border border-terminal-primary/30 px-2 py-0.5 rounded">
-              [{node.type}]
-            </span>
-            {node.publishedAt && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {node.publishedAt}
+      <main className={cn('max-w-4xl mx-auto px-6 py-12', className)}>
+        {/* Content Header */}
+        <header className="mb-10 pb-8 border-b border-border-subtle">
+          <div className="flex flex-wrap items-center gap-3 mb-3 font-mono text-xs text-text-secondary">
+            {category && (
+              <span className="uppercase text-text-primary border border-border-subtle bg-surface-container px-2 py-0.5 font-semibold text-[10px]">
+                {category}
               </span>
             )}
-            {node.readingTime && (
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {node.readingTime}
-              </span>
-            )}
+            {metadata}
           </div>
 
-          <h1 className="font-mono text-2xl md:text-4xl text-terminal-text-primary mb-4 leading-tight">
-            {node.title}
+          <h1 className="font-headline text-3xl md:text-5xl font-extrabold text-text-primary mb-4 leading-tight uppercase">
+            {title}
           </h1>
 
-          {node.description && (
-            <p className="text-terminal-text-secondary text-base md:text-lg leading-relaxed mb-6">
-              {node.description}
+          {subtitle && (
+            <p className="text-text-secondary text-base md:text-lg leading-relaxed mb-6 font-sans">
+              {subtitle}
             </p>
           )}
 
-          {/* Skills & Technologies Chips */}
-          {(technologies.length > 0 || skills.length > 0) && (
-            <div className="flex flex-wrap gap-2 pt-2 font-mono text-xs">
-              {technologies.map((tech) => (
+          {/* Tags */}
+          {tags && tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-4 border-t border-border-subtle">
+              {tags.map((tag) => (
                 <span
-                  key={tech.id}
-                  className="px-2 py-0.5 border border-terminal-secondary/40 text-terminal-secondary bg-terminal-secondary/5 rounded"
+                  key={tag}
+                  className="px-2.5 py-0.5 border border-border-subtle text-text-secondary bg-surface-container font-mono text-xs uppercase"
                 >
-                  #{tech.name}
-                </span>
-              ))}
-              {skills.map((skill) => (
-                <span
-                  key={skill.id}
-                  className="px-2 py-0.5 border border-terminal-border text-terminal-text-secondary bg-terminal-surface rounded"
-                >
-                  {skill.name}
+                  #{tag}
                 </span>
               ))}
             </div>
           )}
         </header>
 
-        {/* Content Body */}
-        <article className="prose-terminal">{children}</article>
+        {/* Main Body */}
+        <article className="prose-editorial max-w-none text-text-primary mb-16">{children}</article>
 
-        {/* Related Content Nodes */}
-        {relatedNodes.length > 0 && (
-          <section className="mt-16 pt-8 border-t border-terminal-border">
-            <p className="font-mono text-xs text-terminal-primary uppercase tracking-widest mb-4">
-              // related knowledge nodes
+        {/* Related Items */}
+        {relatedItems && relatedItems.length > 0 && (
+          <section className="mt-16 pt-8 border-t border-border-subtle">
+            <p className="font-mono text-xs text-text-secondary uppercase tracking-widest mb-4">
+              // RELATED ARTIFACTS
             </p>
-            <div className="grid sm:grid-cols-3 gap-4 font-mono text-xs">
-              {relatedNodes.map((rel) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {relatedItems.map((rel) => (
                 <Link
-                  key={rel.id}
-                  href={`/${rel.type === 'article' ? 'articles' : rel.type === 'journal' ? 'journal' : rel.type === 'project' ? 'projects' : rel.type === 'note' ? 'notes' : rel.type}/${rel.slug}`}
-                  className="p-4 border border-terminal-border bg-terminal-surface rounded hover:border-terminal-text-muted transition-colors group flex flex-col justify-between"
+                  key={rel.href}
+                  href={rel.href}
+                  className="p-5 border border-border-subtle bg-surface-container/30 hover:border-text-primary transition-colors group flex flex-col justify-between space-y-2"
                 >
-                  <div>
-                    <span className="text-[10px] text-terminal-text-muted uppercase mb-1 block">[{rel.type}]</span>
-                    <p className="text-terminal-text-primary group-hover:text-terminal-secondary transition-colors font-semibold line-clamp-2">
-                      {rel.title}
-                    </p>
-                  </div>
-                  <span className="text-terminal-secondary text-[10px] mt-3 block">&gt; view node</span>
+                  <span className="text-[10px] font-mono text-text-secondary uppercase block">
+                    [{rel.type}]
+                  </span>
+                  <p className="font-headline text-text-primary group-hover:underline transition-colors font-bold text-sm line-clamp-2">
+                    {rel.title}
+                  </p>
                 </Link>
               ))}
             </div>
           </section>
         )}
 
-        {/* Prev / Next Navigation */}
-        {(prevNext.prev || prevNext.next) && (
-          <nav aria-label="Pagination" className="mt-12 pt-8 border-t border-terminal-border grid grid-cols-2 gap-4 font-mono text-xs">
-            {prevNext.prev ? (
+        {/* Next/Prev Pagination */}
+        {pagination && (pagination.prev || pagination.next) && (
+          <nav
+            aria-label="Pagination"
+            className="mt-12 pt-8 border-t border-border-subtle grid grid-cols-2 gap-4 font-mono text-xs"
+          >
+            {pagination.prev ? (
               <Link
-                href={prevNext.prev.path}
-                className="p-4 border border-terminal-border bg-terminal-surface rounded hover:border-terminal-text-muted transition-colors group"
+                href={pagination.prev.href}
+                className="p-4 border border-border-subtle bg-surface-container/30 hover:border-text-primary transition-colors group"
               >
-                <span className="text-terminal-text-muted mb-1 block">&lt; previous</span>
-                <span className="text-terminal-text-primary group-hover:text-terminal-secondary transition-colors font-semibold truncate block">
-                  {prevNext.prev.title}
+                <span className="text-text-secondary mb-1 block uppercase text-[10px]">&larr; PREVIOUS</span>
+                <span className="text-text-primary font-bold truncate block">
+                  {pagination.prev.title}
                 </span>
               </Link>
-            ) : <div />}
-
-            {prevNext.next ? (
+            ) : (
+              <div />
+            )}
+            {pagination.next && (
               <Link
-                href={prevNext.next.path}
-                className="p-4 border border-terminal-border bg-terminal-surface rounded hover:border-terminal-text-muted transition-colors group text-right"
+                href={pagination.next.href}
+                className="p-4 border border-border-subtle bg-surface-container/30 hover:border-text-primary transition-colors group text-right"
               >
-                <span className="text-terminal-text-muted mb-1 block">next &gt;</span>
-                <span className="text-terminal-text-primary group-hover:text-terminal-secondary transition-colors font-semibold truncate block">
-                  {prevNext.next.title}
+                <span className="text-text-secondary mb-1 block uppercase text-[10px]">NEXT &rarr;</span>
+                <span className="text-text-primary font-bold truncate block">
+                  {pagination.next.title}
                 </span>
               </Link>
-            ) : <div />}
+            )}
           </nav>
         )}
       </main>

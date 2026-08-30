@@ -53,52 +53,52 @@ export default async function AdrDetailPage({ params }: AdrPageProps) {
     : 'Published';
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-24">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer size="md">
-        <article className="space-y-10">
-          {/* Breadcrumbs */}
+        <article className="space-y-12">
+          {/* Breadcrumb Navigation */}
           <div>
             <Link
               href="/system?type=ADR"
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-terminal-text-muted hover:text-terminal-primary transition-colors mb-6"
+              className="inline-flex items-center gap-2 font-mono text-xs text-text-secondary hover:text-text-primary transition-colors uppercase tracking-wider mb-8"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>&larr; BACK TO KNOWLEDGE HUB</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>BACK TO KNOWLEDGE HUB</span>
             </Link>
 
             {adr.isUnlisted && (
-              <div className="mb-6 p-3 border border-terminal-warning/30 bg-terminal-warning/5 text-terminal-warning font-mono text-xs flex items-center gap-2">
-                <Shield className="w-4 h-4 shrink-0" />
+              <div className="mb-8 p-4 border border-border-subtle bg-surface-container text-text-primary font-mono text-xs flex items-center gap-2">
+                <Shield className="w-4 h-4 shrink-0 text-text-secondary" />
                 <span>
-                  [ UNLISTED ADR ] Accessible via direct link only and excluded from public search.
+                  [ UNLISTED ADR ] Accessible via direct link only and excluded from public search indexes.
                 </span>
               </div>
             )}
 
             {/* Meta Bar */}
-            <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-terminal-text-muted mb-4">
-              <span className="px-2 py-0.5 border border-terminal-border text-terminal-primary bg-terminal-primary/5 uppercase text-[10px]">
+            <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-text-secondary mb-4">
+              <span className="px-2.5 py-0.5 border border-border-subtle bg-surface-container text-text-primary font-semibold uppercase text-[10px]">
                 ARCHITECTURE DECISION RECORD
               </span>
-              {adr.adrNumber && <span>ADR-{String(adr.adrNumber).padStart(3, '0')}</span>}
+              {adr.adrNumber && <span className="font-semibold text-text-primary">ADR-{String(adr.adrNumber).padStart(3, '0')}</span>}
               {adr.adrStatus && (
-                <span className="px-2 py-0.5 border border-terminal-primary/30 text-terminal-primary uppercase text-[10px]">
+                <span className="px-2 py-0.5 border border-border-subtle bg-surface-container-high text-text-primary font-semibold uppercase text-[10px]">
                   STATUS: {adr.adrStatus}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-text-secondary" />
                 <span>{formattedDate}</span>
               </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-terminal-text-primary leading-tight">
+            <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-text-primary uppercase leading-[1.08]">
               {adr.title}
             </h1>
 
             {/* Taxonomies */}
-            <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-terminal-border">
+            <div className="mt-8 flex flex-wrap gap-2 pt-6 border-t border-border-subtle">
               {adr.domains.map((d) => (
                 <TaxonomyChip key={d.slug} label={d.name} variant="domain" color={d.color} />
               ))}
@@ -115,14 +115,14 @@ export default async function AdrDetailPage({ params }: AdrPageProps) {
           </div>
 
           {/* Structured ADR Sections */}
-          <div className="space-y-8 max-w-none text-terminal-text-secondary leading-relaxed">
+          <div className="space-y-8 max-w-none text-text-primary leading-relaxed">
             {/* 1. Context */}
             {adr.adrContext && (
-              <section className="space-y-2">
-                <h2 className="font-mono text-xs uppercase tracking-widest text-terminal-primary">
-                  // 1. CONTEXT
+              <section className="space-y-3">
+                <h2 className="font-mono text-xs uppercase tracking-widest text-text-secondary">
+                  01 / CONTEXT &amp; DRIVERS
                 </h2>
-                <div className="p-6 border border-terminal-border bg-terminal-surface/30 text-terminal-text-secondary whitespace-pre-wrap text-base">
+                <div className="p-6 border border-border-subtle bg-surface-container/50 text-text-primary whitespace-pre-wrap text-base leading-relaxed">
                   {adr.adrContext}
                 </div>
               </section>
@@ -130,12 +130,12 @@ export default async function AdrDetailPage({ params }: AdrPageProps) {
 
             {/* 2. Decision */}
             {adr.adrDecision && (
-              <section className="space-y-2">
-                <h2 className="font-mono text-xs uppercase tracking-widest text-terminal-primary flex items-center gap-1.5">
-                  <FileCheck2 className="w-3.5 h-3.5 text-terminal-primary" />
-                  <span>// 2. DECISION RATIONALE</span>
+              <section className="space-y-3">
+                <h2 className="font-mono text-xs uppercase tracking-widest text-text-secondary flex items-center gap-2">
+                  <FileCheck2 className="w-4 h-4 text-text-primary" />
+                  <span>02 / DECISION RATIONALE</span>
                 </h2>
-                <div className="p-6 border-l-2 border-terminal-primary bg-terminal-surface/40 text-terminal-text-primary whitespace-pre-wrap text-base leading-relaxed">
+                <div className="p-6 md:p-8 border-l-2 border-text-primary bg-surface-container text-text-primary whitespace-pre-wrap text-base md:text-lg font-medium leading-relaxed">
                   {adr.adrDecision}
                 </div>
               </section>
@@ -143,23 +143,23 @@ export default async function AdrDetailPage({ params }: AdrPageProps) {
 
             {/* 3. Consequences */}
             {adr.adrConsequences && (
-              <section className="space-y-2">
-                <h2 className="font-mono text-xs uppercase tracking-widest text-terminal-primary">
-                  // 3. CONSEQUENCES & TRADE-OFFS
+              <section className="space-y-3">
+                <h2 className="font-mono text-xs uppercase tracking-widest text-text-secondary">
+                  03 / CONSEQUENCES &amp; TRADE-OFFS
                 </h2>
-                <div className="p-6 border border-terminal-border bg-terminal-surface/30 text-terminal-text-secondary whitespace-pre-wrap text-base">
+                <div className="p-6 border border-border-subtle bg-surface-container/50 text-text-primary whitespace-pre-wrap text-base leading-relaxed">
                   {adr.adrConsequences}
                 </div>
               </section>
             )}
           </div>
 
-          {/* Connected Knowledge (Amendment 34) */}
+          {/* Connected Knowledge */}
           {adr.relatedKnowledge.length > 0 && (
-            <div className="border-t border-terminal-border pt-10 space-y-6">
-              <h2 className="font-mono text-sm uppercase tracking-widest text-terminal-primary flex items-center gap-2">
+            <div className="border-t border-border-subtle pt-12 space-y-6">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-text-secondary flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span>RELATED KNOWLEDGE & PRODUCTION SYSTEMS</span>
+                <span>RELATED KNOWLEDGE &amp; PRODUCTION SYSTEMS</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,12 +167,12 @@ export default async function AdrDetailPage({ params }: AdrPageProps) {
                   <Link
                     key={k.slug}
                     href={k.href}
-                    className="border border-terminal-border bg-terminal-surface/30 p-5 hover:border-terminal-primary transition-colors block"
+                    className="border border-border-subtle bg-surface-container/40 p-6 hover:border-text-primary transition-colors block space-y-2"
                   >
-                    <span className="font-mono text-[10px] text-terminal-primary uppercase block mb-1">
+                    <span className="font-mono text-[10px] text-text-secondary uppercase block">
                       {k.entityType}
                     </span>
-                    <h3 className="font-semibold text-terminal-text-primary text-sm hover:underline">
+                    <h3 className="font-headline font-bold text-text-primary text-base hover:underline">
                       {k.title}
                     </h3>
                   </Link>

@@ -17,13 +17,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'border border-dashed border-terminal-border p-8 md:p-12 text-center bg-terminal-surface/20',
+        'border border-border-subtle p-8 md:p-12 text-center bg-surface-container/40',
         className
       )}
     >
-      <div className="font-mono text-xs text-terminal-primary mb-2">[ STATUS: 0_ENTRIES ]</div>
-      <h3 className="text-lg font-semibold text-terminal-text-primary mb-2">{title}</h3>
-      <p className="text-sm text-terminal-text-secondary max-w-md mx-auto mb-6">{description}</p>
+      <div className="font-mono text-xs uppercase tracking-widest text-text-secondary mb-2">
+        [ 0 RECORDS FOUND ]
+      </div>
+      <h3 className="font-headline text-lg md:text-xl font-bold text-text-primary mb-2 uppercase">
+        {title}
+      </h3>
+      <p className="text-sm text-text-secondary max-w-md mx-auto mb-6 leading-relaxed">
+        {description}
+      </p>
       {action && <div className="flex justify-center">{action}</div>}
     </div>
   );

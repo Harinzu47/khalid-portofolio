@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,7 +10,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Dynamic Terminal Theme System (Mapped to CSS custom properties)
+        // Stitch Design Tokens (Google Stitch Project 7626222099040114874)
+        "surface-main": "#F9F7F2",
+        "surface-bright": "#fdf8f8",
+        "surface-dim": "#ddd9d8",
+        "surface-container": "#f1edec",
+        "surface-container-high": "#ebe7e6",
+        "surface-container-lowest": "#ffffff",
+        "surface-terminal": "#121212",
+        "text-primary": "#1A1A1A",
+        "text-secondary": "#64748B",
+        "border-subtle": "#E2E8F0",
+        "accent-technical": "#1E293B",
+        "terminal-green": "#4ADE80",
+        "primary": "#1A1A1A",
+        "on-primary": "#ffffff",
+        "primary-container": "#1c1b1b",
+        "secondary": "#515f74",
+        "on-secondary": "#ffffff",
+        "outline": "#747878",
+        "outline-variant": "#c4c7c7",
+
+        // Admin Console Terminal Tokens (Preserved for private OS console)
         terminal: {
           bg: "var(--terminal-bg)",
           surface: "var(--terminal-surface)",
@@ -28,8 +50,14 @@ const config: Config = {
         foreground: "var(--terminal-text-primary)",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        headline: ["var(--font-geist)", "Geist", "Inter", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
         mono: ["var(--font-jetbrains-mono)", "JetBrains Mono", "Menlo", "Monaco", "Consolas", "monospace"],
+      },
+      spacing: {
+        "gutter": "24px",
+        "margin-desktop": "64px",
+        "margin-mobile": "20px",
       },
       animation: {
         "marquee":    "marquee 30s linear infinite",

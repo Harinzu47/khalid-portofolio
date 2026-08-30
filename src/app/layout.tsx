@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Geist, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import dynamic from 'next/dynamic';
 import { Navbar } from '@/components/layout/Navbar';
@@ -17,6 +17,12 @@ const GlobalTerminalModal = dynamic(
   () => import('@/components/terminal/GlobalTerminalModal').then((m) => m.GlobalTerminalModal)
 );
 
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  display: 'swap',
+});
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -30,36 +36,31 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'hzcode — Network & Infra Engineer → Fullstack Dev',
+  title: 'HZCODE — Khalid Jundullah | Engineering Portfolio & Knowledge System',
   description:
-    'hzcode.my.id — Portfolio of Khalid Jundullah. Network & Infrastructure Engineer (MTCNA) transitioning into fullstack development. Covering Infrastructure, Networking, Web Dev, and AI.',
+    'HZCODE — Engineering Systems, Infrastructure & Developer Operating Systems by Khalid Jundullah.',
   keywords: [
     'hzcode',
     'Khalid Jundullah',
-    'Network Engineer',
+    'Systems Engineer',
     'Infrastructure',
-    'MikroTik',
-    'MTCNA',
-    'Docker',
-    'Laravel',
-    'Next.js',
-    'FastAPI',
     'Fullstack Developer',
     'TypeScript',
+    'PostgreSQL',
+    'Developer OS',
   ],
   authors: [{ name: 'Khalid Jundullah', url: 'https://hzcode.my.id' }],
   openGraph: {
-    title: 'hzcode — Network & Infra → Fullstack Dev',
-    description:
-      'Personal portfolio covering Infrastructure, Networking, Web Dev, and AI projects.',
+    title: 'HZCODE — Khalid Jundullah',
+    description: 'Engineering Systems, Infrastructure & Developer Operating Systems.',
     type: 'website',
     url: 'https://hzcode.my.id',
-    siteName: 'hzcode',
+    siteName: 'HZCODE',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'hzcode — Network & Infra → Fullstack Dev',
-    description: 'Personal portfolio of Khalid Jundullah (hzcode.my.id)',
+    title: 'HZCODE — Khalid Jundullah',
+    description: 'Engineering Systems, Infrastructure & Developer Operating Systems.',
   },
 };
 
@@ -69,8 +70,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="antialiased bg-terminal-bg text-terminal-text-primary">
+    <html lang="en" className={`${geist.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased bg-surface-main text-text-primary min-h-screen flex flex-col font-sans">
         <ThemeProvider>
           <A11yAnnouncerProvider>
             <SkipToContent />
@@ -79,7 +80,7 @@ export default function RootLayout({
               dangerouslySetInnerHTML={{ __html: JSON.stringify(getPersonSchema()) }}
             />
             <Navbar />
-            <div id="main-content">{children}</div>
+            <div id="main-content" className="flex-grow">{children}</div>
             <Footer />
             <GlobalCommandPalette />
             <GlobalTerminalModal />

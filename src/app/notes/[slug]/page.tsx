@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { PublicReadModelsService } from '@/services/public-read-models.service';
 import { PublicContainer } from '@/components/public/PublicContainer';
 import { TaxonomyChip } from '@/components/public/TaxonomyChip';
-import { ArrowLeft, Clock, Calendar, Shield, CheckCircle2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Shield, BookOpen } from 'lucide-react';
 
 interface NotePageProps {
   params: Promise<{ slug: string }>;
@@ -53,59 +53,58 @@ export default async function NoteDetailPage({ params }: NotePageProps) {
     : 'Published';
 
   return (
-    <main className="min-h-screen bg-terminal-bg text-terminal-text-primary pt-24 pb-24">
+    <main className="min-h-screen bg-surface-main text-text-primary pt-24 pb-32">
       <PublicContainer size="md">
-        <article className="space-y-10">
-          {/* Breadcrumbs */}
+        <article className="space-y-12">
+          {/* Breadcrumb Navigation */}
           <div>
             <Link
               href="/system?type=TECH_NOTE"
-              className="inline-flex items-center gap-1.5 font-mono text-xs text-terminal-text-muted hover:text-terminal-primary transition-colors mb-6"
+              className="inline-flex items-center gap-2 font-mono text-xs text-text-secondary hover:text-text-primary transition-colors uppercase tracking-wider mb-8"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>&larr; BACK TO KNOWLEDGE HUB</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>BACK TO KNOWLEDGE HUB</span>
             </Link>
 
             {note.isUnlisted && (
-              <div className="mb-6 p-3 border border-terminal-warning/30 bg-terminal-warning/5 text-terminal-warning font-mono text-xs flex items-center gap-2">
-                <Shield className="w-4 h-4 shrink-0" />
+              <div className="mb-8 p-4 border border-border-subtle bg-surface-container text-text-primary font-mono text-xs flex items-center gap-2">
+                <Shield className="w-4 h-4 shrink-0 text-text-secondary" />
                 <span>
-                  [ UNLISTED TECH NOTE ] Accessible via direct link only and excluded from public search.
+                  [ UNLISTED TECH NOTE ] Accessible via direct link only and excluded from public search indexes.
                 </span>
               </div>
             )}
 
             {/* Meta Bar */}
-            <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-terminal-text-muted mb-4">
-              <span className="px-2 py-0.5 border border-terminal-border text-terminal-secondary bg-terminal-secondary/5 uppercase text-[10px]">
+            <div className="flex flex-wrap items-center gap-3 font-mono text-xs text-text-secondary mb-4">
+              <span className="px-2.5 py-0.5 border border-border-subtle bg-surface-container text-text-primary font-semibold uppercase text-[10px]">
                 TECH NOTE
               </span>
-              {note.noteNumber && <span>#{String(note.noteNumber).padStart(3, '0')}</span>}
+              {note.noteNumber && <span className="font-semibold text-text-primary">#{String(note.noteNumber).padStart(3, '0')}</span>}
               {note.verificationStatus && (
-                <span className="flex items-center gap-1 text-terminal-primary">
-                  <CheckCircle2 className="w-3 h-3" />
-                  <span className="uppercase">{note.verificationStatus}</span>
+                <span className="uppercase text-[10px] px-2 py-0.5 border border-border-subtle bg-surface-container-high text-text-primary font-semibold">
+                  STATUS: {note.verificationStatus}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-text-secondary" />
                 <span>{formattedDate}</span>
               </span>
               {note.readingTimeMinutes && (
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-text-secondary" />
                   <span>{note.readingTimeMinutes} min read</span>
                 </span>
               )}
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-terminal-text-primary leading-tight">
+            <h1 className="font-headline text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-text-primary uppercase leading-[1.08]">
               {note.title}
             </h1>
 
             {/* Taxonomies */}
-            <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-terminal-border">
+            <div className="mt-8 flex flex-wrap gap-2 pt-6 border-t border-border-subtle">
               {note.domains.map((d) => (
                 <TaxonomyChip key={d.slug} label={d.name} variant="domain" color={d.color} />
               ))}
@@ -121,24 +120,24 @@ export default async function NoteDetailPage({ params }: NotePageProps) {
             </div>
           </div>
 
-          {/* Note Summary */}
+          {/* Note Excerpt */}
           {note.excerpt && (
-            <div className="p-5 border-l-2 border-terminal-secondary bg-terminal-surface/40 text-terminal-text-secondary text-base leading-relaxed">
+            <div className="p-6 md:p-8 border-l-2 border-text-primary bg-surface-container text-text-primary text-base leading-relaxed">
               {note.excerpt}
             </div>
           )}
 
-          {/* Note Code & Content */}
-          <div className="bg-surface-code border border-terminal-border p-6 md:p-8 font-mono text-xs md:text-sm text-terminal-text-primary whitespace-pre-wrap leading-relaxed">
+          {/* Note Code & Technical Content */}
+          <div className="editorial-code-block p-6 md:p-8 text-xs md:text-sm whitespace-pre-wrap leading-relaxed">
             {note.content}
           </div>
 
-          {/* Connected Knowledge (Amendment 34) */}
+          {/* Connected Knowledge */}
           {note.relatedKnowledge.length > 0 && (
-            <div className="border-t border-terminal-border pt-10 space-y-6">
-              <h2 className="font-mono text-sm uppercase tracking-widest text-terminal-primary flex items-center gap-2">
+            <div className="border-t border-border-subtle pt-12 space-y-6">
+              <h2 className="font-mono text-xs uppercase tracking-widest text-text-secondary flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span>RELATED KNOWLEDGE & ARCHITECTURAL DECISIONS</span>
+                <span>RELATED KNOWLEDGE &amp; ARCHITECTURAL DECISIONS</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -146,12 +145,12 @@ export default async function NoteDetailPage({ params }: NotePageProps) {
                   <Link
                     key={k.slug}
                     href={k.href}
-                    className="border border-terminal-border bg-terminal-surface/30 p-5 hover:border-terminal-primary transition-colors block"
+                    className="border border-border-subtle bg-surface-container/40 p-6 hover:border-text-primary transition-colors block space-y-2"
                   >
-                    <span className="font-mono text-[10px] text-terminal-primary uppercase block mb-1">
+                    <span className="font-mono text-[10px] text-text-secondary uppercase block">
                       {k.entityType}
                     </span>
-                    <h3 className="font-semibold text-terminal-text-primary text-sm hover:underline">
+                    <h3 className="font-headline font-bold text-text-primary text-base hover:underline">
                       {k.title}
                     </h3>
                   </Link>

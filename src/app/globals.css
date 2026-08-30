@@ -3,97 +3,44 @@
 @tailwind utilities;
 
 :root {
+  /* Stitch Editorial Design Tokens (Google Stitch Project 7626222099040114874) */
+  --surface-main: #F9F7F2;
+  --surface-bright: #fdf8f8;
+  --surface-dim: #ddd9d8;
+  --surface-container: #f1edec;
+  --surface-container-high: #ebe7e6;
+  --surface-container-lowest: #ffffff;
+  --surface-terminal: #121212;
+  --text-primary: #1A1A1A;
+  --text-secondary: #64748B;
+  --border-subtle: #E2E8F0;
+  --accent-technical: #1E293B;
+  --terminal-green: #4ADE80;
+
+  /* Admin Console Terminal Theme (Scoped for /admin) */
   --bg: #0d1117;
   --surface: #161b22;
   --surface-alt: #21262d;
   --surface-code: #121212;
   --border: #30363d;
-  --border-subtle: #21262d;
   --accent: #7ee787;
   --accent-secondary: #79c0ff;
   --accent-warm: #f78166;
   --accent-slate: #334155;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #484f58;
 
   /* Backward compatibility aliases */
-  --terminal-bg: var(--bg);
-  --terminal-surface: var(--surface);
-  --terminal-surface-alt: var(--surface-alt);
-  --terminal-border: var(--border);
-  --terminal-primary: var(--accent);
-  --terminal-secondary: var(--accent-secondary);
-  --terminal-accent: var(--accent-warm);
+  --terminal-bg: #0d1117;
+  --terminal-surface: #161b22;
+  --terminal-surface-alt: #21262d;
+  --terminal-border: #30363d;
+  --terminal-primary: #7ee787;
+  --terminal-secondary: #79c0ff;
+  --terminal-accent: #f78166;
   --terminal-purple: #d2a8ff;
   --terminal-warning: #f0883e;
-  --terminal-text-primary: var(--text-primary);
-  --terminal-text-secondary: var(--text-secondary);
-  --terminal-text-muted: var(--text-muted);
-}
-
-/* Matrix Theme */
-[data-theme="matrix"] {
-  --terminal-bg: #000000;
-  --terminal-surface: #051408;
-  --terminal-surface-alt: #0a2910;
-  --terminal-border: #145220;
-  --terminal-primary: #00ff66;
-  --terminal-secondary: #33ff99;
-  --terminal-accent: #ff3366;
-  --terminal-purple: #00ffaa;
-  --terminal-warning: #ccff00;
-  --terminal-text-primary: #00ff66;
-  --terminal-text-secondary: #00b347;
-  --terminal-text-muted: #006629;
-}
-
-/* Retro Amber CRT Theme */
-[data-theme="amber"] {
-  --terminal-bg: #0c0800;
-  --terminal-surface: #1a1200;
-  --terminal-surface-alt: #2e2000;
-  --terminal-border: #4d3600;
-  --terminal-primary: #ffb000;
-  --terminal-secondary: #ffd066;
-  --terminal-accent: #ff5500;
-  --terminal-purple: #ff9900;
-  --terminal-warning: #ffcc00;
-  --terminal-text-primary: #ffb000;
-  --terminal-text-secondary: #cc8d00;
-  --terminal-text-muted: #805800;
-}
-
-/* Cyberpunk Synthwave Theme */
-[data-theme="cyberpunk"] {
-  --terminal-bg: #0a0e17;
-  --terminal-surface: #121b2d;
-  --terminal-surface-alt: #1a2740;
-  --terminal-border: #2c3f66;
-  --terminal-primary: #00f0ff;
-  --terminal-secondary: #ff007f;
-  --terminal-accent: #ff0055;
-  --terminal-purple: #bd00ff;
-  --terminal-warning: #ffe600;
-  --terminal-text-primary: #f0f6fc;
-  --terminal-text-secondary: #8da2c0;
-  --terminal-text-muted: #506488;
-}
-
-/* Arctic Nord Theme */
-[data-theme="nord"] {
-  --terminal-bg: #242933;
-  --terminal-surface: #2e3440;
-  --terminal-surface-alt: #3b4252;
-  --terminal-border: #434c5e;
-  --terminal-primary: #88c0d0;
-  --terminal-secondary: #81a1c1;
-  --terminal-accent: #bf616a;
-  --terminal-purple: #b48ead;
-  --terminal-warning: #ebcb8b;
-  --terminal-text-primary: #eceff4;
-  --terminal-text-secondary: #d8dee9;
-  --terminal-text-muted: #707d95;
+  --terminal-text-primary: #e6edf3;
+  --terminal-text-secondary: #8b949e;
+  --terminal-text-muted: #484f58;
 }
 
 * {
@@ -104,113 +51,115 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--surface-main);
+  color: var(--text-primary);
 }
 
 body {
-  color: var(--terminal-text-primary);
-  background: var(--terminal-bg);
+  color: var(--text-primary);
+  background-color: var(--surface-main);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* CRT Scanline Filter */
-.crt-scanlines {
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%,
-    rgba(0, 0, 0, 0.25) 50%
-  ), linear-gradient(
-    90deg,
-    rgba(255, 0, 0, 0.03),
-    rgba(0, 255, 0, 0.01),
-    rgba(0, 0, 255, 0.03)
-  );
-  background-size: 100% 3px, 3px 100%;
+/* Custom Scrollbar — minimal editorial style */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-/* Marquee Animation */
-@keyframes marquee {
-  0%   { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
+::-webkit-scrollbar-track {
+  background: var(--surface-main);
 }
-
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-/* Terminal cursor blink */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-
-.cursor-blink::after {
-  content: '_';
-  animation: blink 1s step-end infinite;
-  color: var(--terminal-primary);
-}
-
-/* Custom Scrollbar — terminal style */
-::-webkit-scrollbar       { width: 8px; }
-::-webkit-scrollbar-track { background: var(--terminal-bg); }
 ::-webkit-scrollbar-thumb {
-  background: var(--terminal-border);
-  border-radius: 2px;
+  background: var(--border-subtle);
+  border-radius: 0px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--terminal-text-muted); }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
 
 /* Selection */
 ::selection {
-  background-color: var(--terminal-primary);
-  color: var(--terminal-bg);
+  background-color: var(--text-primary);
+  color: var(--surface-main);
 }
 
 /* Focus-visible accessibility ring */
 :focus-visible {
-  outline: 2px solid var(--terminal-primary);
+  outline: 2px solid var(--text-primary);
   outline-offset: 2px;
 }
 
-/* Prose overrides for terminal markdown */
-.prose-terminal {
-  color: var(--terminal-text-primary);
+/* Editorial Typography Helpers */
+.font-headline {
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
 }
-.prose-terminal h1,
-.prose-terminal h2,
-.prose-terminal h3 {
+
+/* Obsidian Terminal Code Block in Editorial View */
+.editorial-code-block {
+  background-color: var(--surface-terminal);
+  color: #f0f6fc;
   font-family: var(--font-jetbrains-mono), monospace;
-  color: var(--terminal-text-primary);
+  border: 1px solid #262626;
+  border-radius: 0px;
 }
-.prose-terminal code {
+
+/* Prose overrides for Editorial knowledge markdown */
+.prose-editorial {
+  color: var(--text-secondary);
+  font-family: var(--font-inter), sans-serif;
+}
+.prose-editorial h1,
+.prose-editorial h2,
+.prose-editorial h3,
+.prose-editorial h4 {
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.prose-editorial p {
+  color: #334155;
+  line-height: 1.75;
+}
+.prose-editorial code {
   font-family: var(--font-jetbrains-mono), monospace;
-  background: var(--terminal-bg);
-  border: 1px solid var(--terminal-border);
+  background: var(--surface-container-high);
+  border: 1px solid var(--border-subtle);
   padding: 0.15em 0.4em;
-  border-radius: 3px;
-  color: var(--terminal-secondary);
+  border-radius: 0px;
+  color: var(--text-primary);
   font-size: 0.875em;
 }
-.prose-terminal pre {
-  background: var(--terminal-bg)!important;
-  border: 1px solid var(--terminal-border);
-  border-radius: 4px;
+.prose-editorial pre {
+  background: var(--surface-terminal) !important;
+  color: #f1f5f9;
+  border: 1px solid #262626;
+  border-radius: 0px;
+  padding: 1.25rem;
 }
-.prose-terminal a {
-  color: var(--terminal-secondary);
+.prose-editorial pre code {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+.prose-editorial a {
+  color: var(--text-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.prose-terminal blockquote {
-  border-left: 2px solid var(--terminal-primary);
-  background: var(--terminal-surface);
-  padding: 0.75rem 1rem;
-  border-radius: 0 4px 4px 0;
-  color: var(--terminal-text-secondary);
+.prose-editorial a:hover {
+  color: #000000;
 }
-.prose-terminal hr {
-  border-color: var(--terminal-border);
+.prose-editorial blockquote {
+  border-left: 2px solid var(--text-primary);
+  background: var(--surface-container);
+  padding: 0.75rem 1rem;
+  border-radius: 0px;
+  color: var(--text-secondary);
+}
+.prose-editorial hr {
+  border-color: var(--border-subtle);
 }

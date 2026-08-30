@@ -19,33 +19,32 @@ export function SectionHeader({
   action,
 }: SectionHeaderProps) {
   return (
-    <div className={cn('mb-10 md:mb-14', className)}>
-      <div className="flex items-start justify-between gap-4">
+    <div className={cn('mb-10 md:mb-14 border-b border-border-subtle pb-6', className)}>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           {category && (
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-mono text-xs uppercase tracking-widest text-terminal-primary">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="font-mono text-xs uppercase tracking-widest text-text-secondary">
                 {category}
               </span>
               {badge && (
-                <span className="font-mono text-[10px] px-1.5 py-0.5 border border-terminal-border text-terminal-text-secondary">
+                <span className="font-mono text-[10px] px-2 py-0.5 border border-border-subtle text-text-secondary bg-surface-container">
                   {badge}
                 </span>
               )}
             </div>
           )}
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-terminal-text-primary">
+          <h1 className="font-headline text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text-primary uppercase leading-tight">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-3 text-base md:text-lg text-terminal-text-secondary max-w-3xl leading-relaxed">
+            <p className="mt-3 text-base md:text-lg text-text-secondary max-w-3xl leading-relaxed">
               {subtitle}
             </p>
           )}
         </div>
-        {action && <div className="hidden sm:block shrink-0">{action}</div>}
+        {action && <div className="shrink-0 pt-2 md:pt-0">{action}</div>}
       </div>
-      <div className="mt-6 w-full h-[1px] bg-terminal-border" />
     </div>
   );
 }
