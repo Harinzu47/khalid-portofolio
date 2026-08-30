@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { PublicReadModelsService } from '@/services/public-read-models.service';
 import { PublicContainer } from '@/components/public/PublicContainer';
 import { TaxonomyChip } from '@/components/public/TaxonomyChip';
+import { TechnicalContentRenderer } from '@/components/content/TechnicalContentRenderer';
 import { ArrowLeft, Clock, Calendar, Shield, BookOpen } from 'lucide-react';
 
 interface NotePageProps {
@@ -127,9 +128,9 @@ export default async function NoteDetailPage({ params }: NotePageProps) {
             </div>
           )}
 
-          {/* Note Code & Technical Content */}
-          <div className="editorial-code-block p-6 md:p-8 text-xs md:text-sm whitespace-pre-wrap leading-relaxed">
-            {note.content}
+          {/* Note Technical Content (Amendment 1: Canonical shared renderer) */}
+          <div className="prose-technical max-w-none">
+            <TechnicalContentRenderer content={note.content} variant="public" />
           </div>
 
           {/* Connected Knowledge */}

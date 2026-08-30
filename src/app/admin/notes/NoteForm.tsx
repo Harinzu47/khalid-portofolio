@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { Switch } from '@/components/ui/Switch';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { TechnicalMarkdownEditor } from '@/components/admin/content/TechnicalMarkdownEditor';
 import { Plus, X, Loader2, ArrowLeft, Info, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import type { TechNoteEditorDTO } from '@/types/dtos';
@@ -201,14 +202,12 @@ export function NoteForm({
           placeholder="Concise technical description of this recipe or note"
         />
 
-        <Textarea
+        <TechnicalMarkdownEditor
           label="Technical Note Content *"
-          rows={14}
-          required
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
           error={fieldErrors.content?.[0]}
-          placeholder="```typescript&#10;// Type-safe implementation snippet&#10;```&#10;&#10;Explain applicability and verification steps..."
+          placeholder="Write Markdown here...\n\n# Heading\n\nSupports **bold**, *italic*, lists, tables, code blocks, and ```mermaid diagrams."
         />
       </div>
 

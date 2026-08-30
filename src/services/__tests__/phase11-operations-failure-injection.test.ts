@@ -175,6 +175,7 @@ describe('Phase 11: Operations Diagnostics & Privacy Failure Injection Suite', (
       const unlistedProjId = '66666666-6666-6666-6666-666666666601';
       const unlistedSlug = 'unlisted-client-special-portal';
 
+      await db.delete(projects).where(eq(projects.id, unlistedProjId));
       await db.insert(projects).values({
         id: unlistedProjId,
         ownerId: OWNER_A,
@@ -182,10 +183,10 @@ describe('Phase 11: Operations Diagnostics & Privacy Failure Injection Suite', (
         slug: unlistedSlug,
         visibility: 'unlisted',
         publicationStatus: 'published',
-        publishedAt: new Date(),
+        publishedAt: new Date(Date.now() - 60000),
         createdAt: new Date(),
         updatedAt: new Date(),
-      }).onConflictDoNothing();
+      });
 
       // 1. Direct slug detail resolves
       const detail = await PublicReadModelsService.getProjectDetailBySlug(unlistedSlug);

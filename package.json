@@ -26,6 +26,7 @@
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.468.0",
+    "mermaid": "^11.17.2",
     "next": "^16.2.12",
     "next-mdx-remote": "^6.0.0",
     "postgres": "^3.4.9",
@@ -36,6 +37,7 @@
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.0",
     "recharts": "^2.15.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.5.5",
     "zod": "^4.4.3"
   },
