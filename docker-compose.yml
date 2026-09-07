@@ -5,10 +5,11 @@ services:
       dockerfile: Dockerfile
     container_name: hzcode_developer_os
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
+      - OWNER_USER_ID=${OWNER_USER_ID:?Set OWNER_USER_ID to the Supabase owner UUID}
       - PORT=3000
       - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/developer_os}
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://placeholder.supabase.co}
@@ -25,7 +26,7 @@ services:
     container_name: hzcode_postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}

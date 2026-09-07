@@ -47,6 +47,10 @@ const formatJsonField = (val: unknown): string | null => {
   return JSON.stringify(val);
 };
 
+// Related records must satisfy their own visibility policy, independently of the parent.
+const isPublicActive = (record: { visibility: string; archivedAt: Date | null } | null | undefined): boolean =>
+  record?.visibility === 'public' && record.archivedAt === null;
+
 export class PublicReadModelsService {
   // =========================================================================
   // 1. WORK READ MODELS (/work and /work/[slug])
@@ -84,7 +88,7 @@ export class PublicReadModelsService {
 
     for (const p of rows) {
       // Check pillar / domain filtering if provided
-      const domainRefs: PublicEntityRefDTO[] = p.domains.map((pd) => ({
+      const domainRefs: PublicEntityRefDTO[] = p.domains.filter((link) => isPublicActive(link.domain)).map((pd) => ({
         name: pd.domain.name,
         slug: pd.domain.slug,
         color: null,
@@ -118,7 +122,7 @@ export class PublicReadModelsService {
       // Extract primary thumbnail URL if available
       let thumbnailUrl: string | null = null;
       if (p.media && p.media.length > 0) {
-        const firstMedia = p.media[0].media;
+        const firstMedia = p.media.find((item) => isPublicActive(item.media))?.media;
         if (firstMedia && firstMedia.path) {
           thumbnailUrl = await MediaDeliveryService.resolvePublicDeliveryUrl(firstMedia.path);
         }
@@ -132,13 +136,13 @@ export class PublicReadModelsService {
         status: p.status,
         featured: p.featured,
         domains: domainRefs,
-        technologies: p.technologies.map((pt) => ({
+        technologies: p.technologies.filter((link) => isPublicActive(link.technology)).map((pt) => ({
           name: pt.technology.name,
           slug: pt.technology.slug,
           color: null,
           icon: pt.technology.iconName,
         })),
-        skills: p.skills.map((ps) => ({
+        skills: p.skills.filter((link) => isPublicActive(link.skill)).map((ps) => ({
           name: ps.skill.name,
           slug: ps.skill.slug,
         })),
@@ -208,7 +212,7 @@ export class PublicReadModelsService {
     const resolvedMedia: PublicMediaItemDTO[] = [];
     if (project.media && project.media.length > 0) {
       for (const item of project.media) {
-        if (item.media && item.media.path) {
+        if (item.media && isPublicActive(item.media) && item.media.path) {
           const url = await MediaDeliveryService.resolvePublicDeliveryUrl(item.media.path);
           if (url) {
             resolvedMedia.push({
@@ -245,23 +249,23 @@ export class PublicReadModelsService {
       liveUrl: sanitizePublicUrl(project.liveUrl),
       documentationUrl: null,
       featured: project.featured,
-      domains: project.domains.map((d) => ({
+      domains: project.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({
         name: d.domain.name,
         slug: d.domain.slug,
         color: null,
         icon: null,
       })),
-      technologies: project.technologies.map((t) => ({
+      technologies: project.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({
         name: t.technology.name,
         slug: t.technology.slug,
         color: null,
         icon: t.technology.iconName,
       })),
-      skills: project.skills.map((s) => ({
+      skills: project.skills.filter((link) => isPublicActive(link.skill)).map((s) => ({
         name: s.skill.name,
         slug: s.skill.slug,
       })),
-      tags: project.tags.map((t) => ({
+      tags: project.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({
         name: t.tag.name,
         slug: t.tag.slug,
       })),
@@ -330,19 +334,19 @@ export class PublicReadModelsService {
         isCurrent: exp.isCurrent,
         description: exp.description,
         achievements: (exp.responsibilities as string[]) || [],
-        domains: exp.domains.map((d) => ({
+        domains: exp.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({
           name: d.domain.name,
           slug: d.domain.slug,
           color: null,
           icon: null,
         })),
-        technologies: exp.technologies.map((t) => ({
+        technologies: exp.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({
           name: t.technology.name,
           slug: t.technology.slug,
           color: null,
           icon: t.technology.iconName,
         })),
-        skills: exp.skills.map((s) => ({
+        skills: exp.skills.filter((link) => isPublicActive(link.skill)).map((s) => ({
           name: s.skill.name,
           slug: s.skill.slug,
         })),
@@ -742,9 +746,9 @@ export class PublicReadModelsService {
           publishedAt: a.publishedAt ? a.publishedAt.toISOString() : null,
           readingTimeMinutes: a.readingTimeMinutes,
           href: `/articles/${a.slug}`,
-          domains: a.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-          technologies: a.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-          tags: a.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+          domains: a.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+          technologies: a.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+          tags: a.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
         });
       }
     }
@@ -780,9 +784,9 @@ export class PublicReadModelsService {
           summary: n.summary,
           publishedAt: n.publishedAt ? n.publishedAt.toISOString() : null,
           href: `/notes/${n.slug}`,
-          domains: n.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-          technologies: n.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-          tags: n.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+          domains: n.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+          technologies: n.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+          tags: n.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
         });
       }
     }
@@ -853,9 +857,9 @@ export class PublicReadModelsService {
           summary: j.summary,
           publishedAt: j.publishedAt ? j.publishedAt.toISOString() : null,
           href: `/journal/${j.slug}`,
-          domains: j.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-          technologies: j.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-          tags: j.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+          domains: j.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+          technologies: j.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+          tags: j.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
         });
       }
     }
@@ -896,10 +900,10 @@ export class PublicReadModelsService {
       content: row.content,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
       readingTimeMinutes: row.readingTimeMinutes,
-      tags: row.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
-      domains: row.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-      technologies: row.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-      skills: row.skills.map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
+      tags: row.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+      domains: row.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+      technologies: row.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+      skills: row.skills.filter((link) => isPublicActive(link.skill)).map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
       relatedKnowledge,
       isUnlisted: row.visibility === 'unlisted',
     };
@@ -932,10 +936,10 @@ export class PublicReadModelsService {
       excerpt: row.summary,
       content: row.content,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
-      tags: row.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
-      domains: row.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-      technologies: row.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-      skills: row.skills.map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
+      tags: row.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+      domains: row.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+      technologies: row.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+      skills: row.skills.filter((link) => isPublicActive(link.skill)).map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
       relatedKnowledge,
       isUnlisted: row.visibility === 'unlisted',
     };
@@ -1003,10 +1007,10 @@ export class PublicReadModelsService {
       content: row.content,
       publishedAt: row.publishedAt ? row.publishedAt.toISOString() : null,
       journalDate: row.entryDate,
-      tags: row.tags.map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
-      domains: row.domains.map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
-      technologies: row.technologies.map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
-      skills: row.skills.map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
+      tags: row.tags.filter((link) => isPublicActive(link.tag)).map((t) => ({ name: t.tag.name, slug: t.tag.slug })),
+      domains: row.domains.filter((link) => isPublicActive(link.domain)).map((d) => ({ name: d.domain.name, slug: d.domain.slug, color: null, icon: null })),
+      technologies: row.technologies.filter((link) => isPublicActive(link.technology)).map((t) => ({ name: t.technology.name, slug: t.technology.slug, color: null, icon: t.technology.iconName })),
+      skills: row.skills.filter((link) => isPublicActive(link.skill)).map((s) => ({ name: s.skill.name, slug: s.skill.slug })),
       relatedKnowledge,
       isUnlisted: row.visibility === 'unlisted',
     };

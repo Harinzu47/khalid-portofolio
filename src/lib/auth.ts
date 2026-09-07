@@ -1,6 +1,8 @@
 import { createClient } from './supabase/server';
 import { redirect } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
+import { isOwnerUser } from './owner-policy';
+import { ForbiddenError } from './errors';
 
 export interface AuthSession {
   user: User;
@@ -12,7 +14,7 @@ export interface AuthSession {
 export type OwnerSession = AuthSession;
 
 /**
- * Enforces authenticated operator session at the server boundary.
+ * Enforces the configured owner session at every server boundary.
  * If unauthenticated, redirects to `/login`.
  */
 export async function requireAuth(redirectTo?: string): Promise<AuthSession> {
@@ -27,6 +29,8 @@ export async function requireAuth(redirectTo?: string): Promise<AuthSession> {
     redirect(target);
   }
 
+  if (!isOwnerUser(user)) throw new ForbiddenError();
+
   return {
     user,
     userId: user.id,
@@ -36,8 +40,7 @@ export async function requireAuth(redirectTo?: string): Promise<AuthSession> {
 
 /**
  * Canonical owner authorization helper for HZCODE Personal Developer OS.
- * In v1, any valid authenticated session represents the single system owner.
- * Explicit multi-role support (Admin/Editor/Reviewer) is deferred.
+ * Both guard names enforce the same configured owner identity.
  */
 export async function requireOwnerSession(redirectTo?: string): Promise<OwnerSession> {
   return await requireAuth(redirectTo);
@@ -52,7 +55,7 @@ export async function getOptionalUser(): Promise<User | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    return user;
+    return isOwnerUser(user) ? user : null;
   } catch {
     return null;
   }

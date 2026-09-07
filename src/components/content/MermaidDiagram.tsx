@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { enqueueMermaidRender } from './mermaid-render-queue';
 
 /**
  * MermaidDiagram — Client-only Mermaid renderer.
@@ -19,6 +20,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 let mermaidInitialized = false;
 let mermaidModule: typeof import('mermaid') | null = null;
+let nextRenderId = 0;
 
 async function ensureMermaid() {
   if (!mermaidModule) {
@@ -72,26 +74,26 @@ export function MermaidDiagram({ chart, isAdminPreview = false }: MermaidDiagram
       return;
     }
 
-    const uniqueId = `mermaid-${Date.now()}-${currentGeneration}`;
+    const uniqueId = `mermaid-${++nextRenderId}`;
+    const isCurrent = () => currentGeneration === generationRef.current;
 
     try {
-      const mermaid = await ensureMermaid();
-      // Amendment 7: Check generation before applying — latest source wins
-      if (currentGeneration !== generationRef.current) return;
-
-      const { svg } = await mermaid.render(uniqueId, trimmedChart);
+      const result = await enqueueMermaidRender(isCurrent, async () => {
+        const mermaid = await ensureMermaid();
+        if (!isCurrent()) return;
+        return mermaid.render(uniqueId, trimmedChart);
+      });
 
       // Amendment 7: Re-check generation after async render completes
-      if (currentGeneration !== generationRef.current) return;
+      if (!isCurrent() || !result) return;
 
-      setSvgContent(svg);
+      setSvgContent(result.svg);
       setError(null);
     } catch (err: unknown) {
-      // Clean up any stray DOM elements Mermaid may have injected into document.body
+      // Only clean up this render; Mermaid may already be rendering the next diagram.
       if (typeof document !== 'undefined') {
         const stray = document.getElementById(`d${uniqueId}`) || document.getElementById(uniqueId);
         if (stray) stray.remove();
-        document.querySelectorAll('[id^="dmermaid-"]').forEach((el) => el.remove());
       }
 
       // Amendment 7: Don't overwrite if stale
@@ -111,6 +113,10 @@ export function MermaidDiagram({ chart, isAdminPreview = false }: MermaidDiagram
 
   useEffect(() => {
     renderDiagram();
+    return () => {
+      // Skip queued work when the source changes or this preview unmounts.
+      generationRef.current++;
+    };
   }, [renderDiagram]);
 
   // Amendment 22: Before mermaid loads, show source as fallback

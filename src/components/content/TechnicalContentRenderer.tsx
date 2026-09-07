@@ -16,11 +16,11 @@
  *     └── mermaid fenced blocks → MermaidDiagram (client boundary, lazy)
  */
 
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-async';
+import vscDarkPlus from 'react-syntax-highlighter/dist/esm/styles/prism/vsc-dark-plus';
 import { MermaidDiagram } from './MermaidDiagram';
 import { sanitizeUrl } from '@/lib/url-sanitizer';
 import type { Components } from 'react-markdown';
@@ -31,7 +31,7 @@ interface TechnicalContentRendererProps {
   variant?: 'public' | 'admin';
 }
 
-export function TechnicalContentRenderer({
+export const TechnicalContentRenderer = memo(function TechnicalContentRenderer({
   content,
   variant = 'public',
 }: TechnicalContentRendererProps) {
@@ -245,4 +245,4 @@ export function TechnicalContentRenderer({
       </ReactMarkdown>
     </div>
   );
-}
+});

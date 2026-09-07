@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { applySecurityHeaders, validateSafeRedirectUrl } from '@/lib/security';
-import { rateLimit } from '@/lib/rate-limit';
+import { isOwnerUser } from '@/lib/owner-policy';
 
 /**
  * Updates user auth session on incoming HTTP requests.
@@ -15,22 +15,8 @@ export async function updateSession(request: NextRequest) {
   // Apply HTTP Security Headers & CSP
   applySecurityHeaders(supabaseResponse.headers);
 
-  // Apply Rate Limiting on Login Route (max 10 requests per minute per IP)
+  // Login attempts are limited in the server action, including direct POSTs.
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login');
-  if (isAuthRoute) {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
-    const rateLimitResult = rateLimit(`login:${ip}`, { limit: 10, windowSeconds: 60 });
-
-    if (!rateLimitResult.success) {
-      return new NextResponse('Too Many Requests. Please wait before retrying login.', {
-        status: 429,
-        headers: {
-          'Retry-After': String(rateLimitResult.resetSeconds),
-          'Content-Type': 'text/plain',
-        },
-      });
-    }
-  }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -63,7 +49,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isPrivateConsoleRoute =
-    request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/os');
+    request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/os') ||
+    request.nextUrl.pathname.startsWith('/api/admin');
+
+  if (isPrivateConsoleRoute && user && !isOwnerUser(user)) {
+    const denied = new NextResponse('Forbidden', { status: 403 });
+    applySecurityHeaders(denied.headers);
+    return denied;
+  }
 
   // Protect /admin and /os routes: redirect unauthenticated users to /login
   if (isPrivateConsoleRoute && !user) {
@@ -76,7 +69,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from /login to target or /os
-  if (isAuthRoute && user) {
+  if (isAuthRoute && isOwnerUser(user)) {
     const rawTarget = request.nextUrl.searchParams.get('redirect');
     const safeTarget = validateSafeRedirectUrl(rawTarget, '/os');
     const url = request.nextUrl.clone();

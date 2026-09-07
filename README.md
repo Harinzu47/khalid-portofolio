@@ -111,6 +111,15 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 ### 3. Database Migration & Seeding
+
+Use an initialized Supabase database (hosted or local). The migration runner checks
+for `auth.uid()`, `auth.role()`, and the Supabase database roles before applying
+migrations. It never creates or replaces auth functions. Standalone PostgreSQL
+requires separately provisioned JWT-aware auth helpers and roles; placeholder
+functions are not sufficient for owner-isolated RLS. If an older migration runner
+was used against an existing database, verify its auth function definitions before
+deployment: this change prevents overwrites but does not repair prior ones.
+
 ```bash
 # Generate and execute schema migrations
 npm run db:migrate

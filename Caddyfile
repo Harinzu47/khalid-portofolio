@@ -7,7 +7,10 @@ hzcode.my.id, www.hzcode.my.id {
   encode zstd gzip
 
   # Reverse proxy to the standalone Next.js node server
-  reverse_proxy app:3000
+  reverse_proxy app:3000 {
+    # Overwrite client input; the app must only be reachable through this proxy.
+    header_up X-Login-Client-IP {remote_host}
+  }
 
   # Security headers
   header {
